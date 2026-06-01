@@ -1,3 +1,19 @@
-export default function Home() {
-  return <h1>HELLO WORLD TEST</h1> 
+import Button from "@/components/ui/Button";
+import useAuth from "@/hooks/useAuth";
+import { getJobs } from "@/lib/api";
+
+export default function HomePage() {
+  const { user } = useAuth();
+
+  const jobs = getJobs();
+
+  return (
+    <>
+      <h1>Hello {user}</h1>
+
+      <p>{jobs[0]}</p>
+
+      <Button />
+    </>
+  );
 }

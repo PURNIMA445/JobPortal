@@ -1,5 +1,5 @@
-import Footer from "@/components/Footer";
-import Navbar from "../components/Header";
+import Footer from "@/components/layout/Footer";
+import Navbar from "../components/layout/Header";
 import { Suspense } from "react";
 import './globals.css';
 export default function RootLayout({ children }) {
