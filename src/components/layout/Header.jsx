@@ -2,6 +2,7 @@
 import { usePathname } from "next/navigation"
 import { useState } from "react"
 import Link from "next/link"
+import Button from "../ui/Button";
 
 function Navbar() {
     const [menuOpen, setMenuOpen] = useState(false);
@@ -31,6 +32,7 @@ function Navbar() {
                             { href: "/how-it-work", label: "How It Works" },
                             { href: "/seekers", label: "Seekers" },
                             { href: "/recruiters", label: "Recruiters" },
+                            { href: "/jobs", label: "Jobs" },
                         ].map(({ href, label }) => {
                             const cleanPathname = pathname.replace(/\/$/, "");
                             const cleanHref = href.replace(/\/$/, "");
@@ -58,9 +60,9 @@ function Navbar() {
                         </Link>
                         <Link
                             href="/get-started"
-                            className="text-sm font-semibold text-white bg-linear-to-r from-rose-400 to-pink-500 hover:from-rose-500 hover:to-pink-600 px-4 py-2 rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
+                            
                         >
-                            Sign up
+                            <Button>Sign up</Button>
                         </Link>
                     </div>
 
