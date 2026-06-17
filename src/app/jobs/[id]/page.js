@@ -3,7 +3,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter, useParams } from "next/navigation";
 import {
     getJob, applyToJob, saveJob, unsaveJob,
-    getJobApplications, updateApplicationStatus
+    getJobApplications, updateApplicationStatus, checkMyScore, getMyApplications
 } from "@/lib/api";
 
 function JobDetail() {
@@ -19,26 +19,48 @@ function JobDetail() {
     const [applications, setApplications] = useState([]);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
-
+    const [myApplication, setMyApplication] = useState(null);
+    const [scoreResult, setScoreResult] = useState(null);
+    const [showScoreForm, setShowScoreForm] = useState(false);
+    const [resumeFile, setResumeFile] = useState(null);
+    const [checkingScore, setCheckingScore] = useState(false);
     const role = typeof window !== "undefined"
         ? localStorage.getItem("role") : null;
 
-    useEffect(() => {
-        console.log("role:", role);
-        console.log("id:", id);
-        getJob(id)
-            .then(setJob)
-            .catch(console.error)
-            .finally(() => setLoading(false));
-
-        // if recruiter, load applications
-        if (role === "RECRUITER") {
-            getJobApplications(id)
-                .then(setApplications)
-                .catch(console.error);
-        }
-    }, [id]);
-
+        useEffect(() => {
+            getJob(id)
+                .then(setJob)
+                .catch(console.error)
+                .finally(() => setLoading(false));
+        
+            if (role === "RECRUITER") {
+                getJobApplications(id)
+                    .then(setApplications)
+                    .catch(console.error);
+            }
+        
+            if (role === "CANDIDATE") {
+                // check if already applied
+                getMyApplications().then(apps => {
+                    const existing = apps.find(a => a.job.id === parseInt(id));
+                    if (existing) {
+                        setMyApplication(existing);
+                        setApplied(true);
+                        // if score already exists show it
+                        if (existing.matchScore) {
+                            setScoreResult({
+                                matchScore: existing.matchScore,
+                                missingSkills: existing.missingSkills
+                                    ? existing.missingSkills.split(",")
+                                    : [],
+                                matchedSkills: [],
+                                suggestions: [],
+                            });
+                        }
+                    }
+                }).catch(console.error);
+            }
+        }, [id]);
     const handleApply = async () => {
         setApplying(true);
         setError(null);
@@ -86,7 +108,20 @@ function JobDetail() {
     if (!job) return (
         <p style={{ padding: 40, fontFamily: "sans-serif" }}>Job not found</p>
     );
-
+    const handleCheckScore = async () => {
+        if (!resumeFile) return setError("Please upload your resume PDF");
+        setCheckingScore(true);
+        setError(null);
+        try {
+            const result = await checkMyScore(myApplication.id, resumeFile);
+            setScoreResult(result);
+            setShowScoreForm(false);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setCheckingScore(false);
+        }
+    };
     return (
         <div style={{ fontFamily: "sans-serif", padding: 24, maxWidth: 800, margin: "0 auto" }}>
             <button onClick={() => router.back()} style={{ ...btnSecondary, marginBottom: 20 }}>
@@ -157,49 +192,182 @@ function JobDetail() {
 
                 {/* Candidate Actions */}
                 {role === "CANDIDATE" && (
-                    <div style={{ marginTop: 20 }}>
-                        {success && <p style={{ color: "green" }}>{success}</p>}
-                        {error && <p style={{ color: "red" }}>{error}</p>}
+    <div style={{ marginTop: 20 }}>
+        {success && <p style={{ color: "green" }}>{success}</p>}
+        {error && <p style={{ color: "red" }}>{error}</p>}
 
-                        {!applied && job.status === "OPEN" && (
-                            <>
-                                <button onClick={handleSave}
-                                    style={{ ...btnSecondary, marginRight: 12 }}>
-                                    {saved ? "★ Saved" : "☆ Save Job"}
-                                </button>
-                                <button
-                                    onClick={() => setShowApplyForm(!showApplyForm)}
-                                    style={btnPrimary}>
-                                    {showApplyForm ? "Cancel" : "Apply Now"}
-                                </button>
+        {/* Not applied yet */}
+        {!applied && job.status === "OPEN" && (
+            <>
+                <button onClick={handleSave}
+                    style={{ ...btnSecondary, marginRight: 12 }}>
+                    {saved ? "★ Saved" : "☆ Save Job"}
+                </button>
+                <button onClick={() => setShowApplyForm(!showApplyForm)}
+                    style={btnPrimary}>
+                    {showApplyForm ? "Cancel" : "Apply Now"}
+                </button>
 
-                                {showApplyForm && (
-                                    <div style={{ marginTop: 16 }}>
-                                        <label style={{ fontSize: 14 }}>
-                                            Cover Letter (optional)
-                                        </label>
-                                        <textarea
-                                            style={{ ...inputStyle, height: 100, marginTop: 6 }}
-                                            placeholder="Tell the recruiter why you're a good fit..."
-                                            value={coverLetter}
-                                            onChange={e => setCoverLetter(e.target.value)}
-                                        />
-                                        <button onClick={handleApply}
-                                            disabled={applying} style={btnPrimary}>
-                                            {applying ? "Submitting..." : "Submit Application"}
-                                        </button>
-                                    </div>
-                                )}
-                            </>
-                        )}
-
-                        {applied && (
-                            <p style={{ color: "green", fontWeight: 500 }}>
-                                ✓ You have applied to this job
-                            </p>
-                        )}
+                {showApplyForm && (
+                    <div style={{ marginTop: 16 }}>
+                        <label style={{ fontSize: 14 }}>
+                            Cover Letter (optional)
+                        </label>
+                        <textarea
+                            style={{ ...inputStyle, height: 100, marginTop: 6 }}
+                            placeholder="Tell the recruiter why you're a good fit..."
+                            value={coverLetter}
+                            onChange={e => setCoverLetter(e.target.value)}
+                        />
+                        <button onClick={handleApply}
+                            disabled={applying} style={btnPrimary}>
+                            {applying ? "Submitting..." : "Submit Application"}
+                        </button>
                     </div>
                 )}
+            </>
+        )}
+
+        {/* Already applied */}
+        {applied && (
+            <div style={{ marginTop: 8 }}>
+                <p style={{ color: "green", fontWeight: 500, marginBottom: 12 }}>
+                    ✓ Applied — Status:
+                    <span style={{ marginLeft: 8, ...statusBadge(myApplication?.status) }}>
+                        {myApplication?.status}
+                    </span>
+                </p>
+
+                {/* Score result */}
+                {scoreResult ? (
+                    <div style={{
+                        border: "1px solid #eee", borderRadius: 10,
+                        padding: 20, marginTop: 12
+                    }}>
+                        <h3 style={{ margin: "0 0 16px" }}>
+                            Your Match Score:
+                            <span style={{
+                                marginLeft: 12, fontSize: 28, fontWeight: 700,
+                                color: scoreResult.matchScore >= 70 ? "green"
+                                    : scoreResult.matchScore >= 50 ? "orange" : "red"
+                            }}>
+                                {scoreResult.matchScore}%
+                            </span>
+                        </h3>
+
+                        {/* Matched skills */}
+                        {scoreResult.matchedSkills?.length > 0 && (
+                            <div style={{ marginBottom: 14 }}>
+                                <strong style={{ fontSize: 14 }}>
+                                    ✓ Matched Skills
+                                </strong>
+                                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 6 }}>
+                                    {scoreResult.matchedSkills.map(s => (
+                                        <span key={s} style={{
+                                            background: "#e8f5e9", color: "#2e7d32",
+                                            padding: "3px 10px", borderRadius: 20, fontSize: 13
+                                        }}>
+                                            {s}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Missing skills */}
+                        {scoreResult.missingSkills?.length > 0 && (
+                            <div style={{ marginBottom: 14 }}>
+                                <strong style={{ fontSize: 14 }}>
+                                    ✗ Missing Skills
+                                </strong>
+                                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 6 }}>
+                                    {scoreResult.missingSkills.map(s => (
+                                        <span key={s} style={{
+                                            background: "#ffebee", color: "#c62828",
+                                            padding: "3px 10px", borderRadius: 20, fontSize: 13
+                                        }}>
+                                            {s}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Experience + projects */}
+                        {scoreResult.experienceMatch && (
+                            <div style={{ marginBottom: 8, fontSize: 14 }}>
+                                <strong>Experience:</strong> {scoreResult.experienceMatch}
+                            </div>
+                        )}
+                        {scoreResult.projectRelevance && (
+                            <div style={{ marginBottom: 14, fontSize: 14 }}>
+                                <strong>Projects:</strong> {scoreResult.projectRelevance}
+                            </div>
+                        )}
+
+                        {/* Suggestions */}
+                        {scoreResult.suggestions?.length > 0 && (
+                            <div style={{
+                                background: "#fff8e1", borderRadius: 8,
+                                padding: 14, marginTop: 8
+                            }}>
+                                <strong style={{ fontSize: 14 }}>
+                                    💡 Suggestions to improve:
+                                </strong>
+                                <ul style={{ margin: "8px 0 0", paddingLeft: 20 }}>
+                                    {scoreResult.suggestions.map((s, i) => (
+                                        <li key={i} style={{ fontSize: 13, marginBottom: 4 }}>
+                                            {s}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+
+                        <button
+                            onClick={() => setShowScoreForm(true)}
+                            style={{ ...btnSecondary, marginTop: 14, fontSize: 13 }}>
+                            Recheck with updated resume
+                        </button>
+                    </div>
+                ) : (
+                    /* No score yet */
+                    <div>
+                        <button
+                            onClick={() => setShowScoreForm(!showScoreForm)}
+                            style={btnPrimary}>
+                            {showScoreForm ? "Cancel" : "🎯 Check My Score"}
+                        </button>
+                    </div>
+                )}
+
+                {/* Score upload form */}
+                {showScoreForm && (
+                    <div style={{
+                        marginTop: 16, border: "1px solid #eee",
+                        borderRadius: 8, padding: 16
+                    }}>
+                        <label style={{ fontSize: 14, fontWeight: 500 }}>
+                            Upload your resume (PDF only)
+                        </label>
+                        <input
+                            type="file"
+                            accept=".pdf"
+                            onChange={e => setResumeFile(e.target.files[0])}
+                            style={{ display: "block", marginTop: 8, marginBottom: 12 }}
+                        />
+                        <button
+                            onClick={handleCheckScore}
+                            disabled={checkingScore}
+                            style={btnPrimary}>
+                            {checkingScore ? "Analyzing... ⏳" : "Analyze Resume"}
+                        </button>
+                    </div>
+                )}
+            </div>
+        )}
+    </div>
+)}
             </div>
 
             {/* Recruiter: Applications List */}

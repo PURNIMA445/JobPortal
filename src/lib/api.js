@@ -239,3 +239,25 @@ export async function markAllRead() {
     });
     return handleResponse(response);
 }
+export async function checkMyScore(applicationId, resumeFile) {
+    const token = document.cookie
+        .split("; ")
+        .find(row => row.startsWith("token="))
+        ?.split("=")[1];
+
+    const formData = new FormData();
+    formData.append("resume", resumeFile);
+
+    const response = await fetch(
+        `${BASE_URL}/api/applications/${applicationId}/check-score`,
+        {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${token}`,
+                // don't set Content-Type — browser sets it automatically for FormData
+            },
+            body: formData,
+        }
+    );
+    return handleResponse(response);
+}
