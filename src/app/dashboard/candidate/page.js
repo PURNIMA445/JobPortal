@@ -1,198 +1,246 @@
 "use client";
+
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { getCandidateProfile, getAllJobs, getMyApplications, 
-         getNotifications, getUnreadCount } from "@/lib/api";
+import {
+  getCandidateProfile,
+  getAllJobs,
+  getMyApplications,
+  getNotifications,
+  getUnreadCount
+} from "@/lib/api";
 
 export default function CandidateDashboard() {
-    const router = useRouter();
-    const [profile, setProfile] = useState(null);
-    const [jobs, setJobs] = useState([]);
-    const [applications, setApplications] = useState([]);
-    const [notifications, setNotifications] = useState([]);
-    const [unreadCount, setUnreadCount] = useState(0);
-    const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
-    useEffect(() => {
-        Promise.all([
-            getCandidateProfile(),
-            getAllJobs(),
-            getMyApplications(),
-            getNotifications(),
-            getUnreadCount(),
-        ]).then(([prof, jobList, apps, notifs, unread]) => {
-            setProfile(prof);
-            setJobs(jobList);
-            setApplications(apps);
-            setNotifications(notifs);
-            setUnreadCount(unread);
-        }).catch(console.error)
-          .finally(() => setLoading(false));
-    }, []);
+  const [profile, setProfile] = useState(null);
+  const [jobs, setJobs] = useState([]);
+  const [applications, setApplications] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-    const logout = () => {
-        document.cookie = "token=; max-age=0; path=/";
-        localStorage.clear();
-        router.push("/login");
-    };
+  useEffect(() => {
+    Promise.all([
+      getCandidateProfile(),
+      getAllJobs(),
+      getMyApplications(),
+      getNotifications(),
+      getUnreadCount(),
+    ])
+      .then(([prof, jobList, apps, notifs, unread]) => {
+        setProfile(prof);
+        setJobs(jobList);
+        setApplications(apps);
+        setNotifications(notifs);
+        setUnreadCount(unread);
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
 
-    if (loading) return <p style={{ padding: 40, fontFamily: "sans-serif" }}>Loading...</p>;
+  const logout = () => {
+    document.cookie = "token=; max-age=0; path=/";
+    localStorage.clear();
+    router.push("/login");
+  };
 
+  if (loading)
     return (
-        <div style={{ fontFamily: "sans-serif", padding: 24, maxWidth: 900, margin: "0 auto" }}>
-            {/* Header */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-                <div>
-                    <h1 style={{ margin: 0 }}>Welcome, {profile?.fullName} 👋</h1>
-                    <p style={{ color: "#666", margin: 0 }}>{profile?.location}</p>
-                </div>
-                <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                    <span style={{ background: "#000", color: "#fff", padding: "4px 10px", borderRadius: 20, fontSize: 13 }}>
-                        🔔 {unreadCount} unread
-                    </span>
-                    <button onClick={() => router.push("/profile/setup")} style={btnSecondary}>
-                        Edit Profile
-                    </button>
-                    <button onClick={logout} style={btnDanger}>
-                        Logout
-                    </button>
-                </div>
-            </div>
-
-            {/* Stats */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 24 }}>
-                {[
-                    { label: "Jobs Available", value: jobs.length },
-                    { label: "My Applications", value: applications.length },
-                    { label: "Notifications", value: notifications.length },
-                ].map(stat => (
-                    <div key={stat.label} style={cardStyle}>
-                        <h2 style={{ margin: 0, fontSize: 32 }}>{stat.value}</h2>
-                        <p style={{ margin: 0, color: "#666" }}>{stat.label}</p>
-                    </div>
-                ))}
-            </div>
-
-            {/* Skills */}
-            <div style={{ ...cardStyle, marginBottom: 24 }}>
-                <h3>My Skills</h3>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                    {profile?.skills?.map(skill => (
-                        <span key={skill.id} style={tagStyle}>{skill.name}</span>
-                    ))}
-                </div>
-            </div>
-
-            {/* Notifications */}
-            {notifications.length > 0 && (
-                <div style={{ ...cardStyle, marginBottom: 24 }}>
-                    <h3>🔔 Notifications</h3>
-                    {notifications.slice(0, 3).map(n => (
-                        <div key={n.id} style={{
-                            padding: "10px 0",
-                            borderBottom: "1px solid #eee",
-                            color: n.isRead ? "#999" : "#000"
-                        }}>
-                            {n.message}
-                            <span style={{ fontSize: 11, color: "#aaa", marginLeft: 8 }}>
-                                {new Date(n.createdAt).toLocaleDateString()}
-                            </span>
-                        </div>
-                    ))}
-                </div>
-            )}
-
-            {/* My Applications */}
-            <div style={{ ...cardStyle, marginBottom: 24 }}>
-                <h3>My Applications</h3>
-                {applications.length === 0
-                    ? <p style={{ color: "#999" }}>No applications yet</p>
-                    : applications.map(app => (
-                        <div key={app.id} style={{ padding: "12px 0", borderBottom: "1px solid #eee" }}>
-                            <strong>{app.job.title}</strong> at {app.job.company.name}
-                            <span style={{ ...statusBadge(app.status), marginLeft: 12 }}>
-                                {app.status}
-                            </span>
-                            {app.matchScore && (
-                                <span style={{ marginLeft: 12, color: "green", fontSize: 13 }}>
-                                    {app.matchScore}% match
-                                </span>
-                            )}
-                        </div>
-                    ))
-                }
-            </div>
-
-            {/* Job Listings */}
-            <div style={cardStyle}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <h3>Available Jobs</h3>
-                    <button onClick={() => router.push("/jobs")} style={btnSecondary}>
-                        View All →
-                    </button>
-                </div>
-                {jobs.slice(0, 5).map(job => (
-                    <div key={job.id} style={{ padding: "12px 0", borderBottom: "1px solid #eee" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between" }}>
-                            <div>
-                                <strong>{job.title}</strong>
-                                <span style={{ color: "#666", marginLeft: 8 }}>
-                                    {job.company.name}
-                                </span>
-                            </div>
-                            <button
-                                onClick={() => router.push(`/jobs/${job.id}`)}
-                                style={btnSmall}>
-                                View →
-                            </button>
-                        </div>
-                        <div style={{ marginTop: 4, fontSize: 13, color: "#888" }}>
-                            {job.location} · {job.jobType} · {job.experienceLevel}
-                        </div>
-                    </div>
-                ))}
-            </div>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-[#F5F2EB]">
+        <p className="text-gray-600">Loading dashboard...</p>
+      </div>
     );
+
+  return (
+    <div className="min-h-screen bg-[#F5F2EB] px-6 py-10 font-sans">
+
+      <div className="max-w-6xl mx-auto space-y-8">
+
+        {/* HEADER */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between bg-white p-6 rounded-2xl shadow-sm">
+
+          <div>
+            <h1 className="text-2xl font-serif font-bold text-gray-900">
+              Welcome, {profile?.fullName} 👋
+            </h1>
+            <p className="text-gray-500">{profile?.location}</p>
+          </div>
+
+          <div className="flex gap-3 mt-4 md:mt-0 items-center">
+
+            <span className="bg-[#7A8B6A] text-white px-3 py-1 rounded-full text-xs">
+              🔔 {unreadCount} unread
+            </span>
+
+            <button
+              onClick={() => router.push("/profile/setup")}
+              className="px-4 py-2 text-sm border border-gray-200 rounded-lg hover:border-[#7A8B6A] transition"
+            >
+              Edit Profile
+            </button>
+
+            <button
+              onClick={logout}
+              className="px-4 py-2 text-sm bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+
+        {/* STATS */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+          {[
+            { label: "Jobs Available", value: jobs.length },
+            { label: "My Applications", value: applications.length },
+            { label: "Notifications", value: notifications.length },
+          ].map((stat) => (
+            <div
+              key={stat.label}
+              className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition"
+            >
+              <h2 className="text-3xl font-bold text-gray-900">
+                {stat.value}
+              </h2>
+              <p className="text-gray-500 text-sm">{stat.label}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* SKILLS */}
+        <div className="bg-white rounded-2xl p-6 shadow-sm">
+          <h3 className="text-lg font-semibold mb-3">My Skills</h3>
+
+          <div className="flex flex-wrap gap-2">
+            {profile?.skills?.map((skill) => (
+              <span
+                key={skill.id}
+                className="px-3 py-1 text-sm rounded-full bg-[#F5F2EB] text-gray-700 border border-gray-200"
+              >
+                {skill.name}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* NOTIFICATIONS */}
+        {notifications.length > 0 && (
+          <div className="bg-white rounded-2xl p-6 shadow-sm">
+            <h3 className="text-lg font-semibold mb-4">🔔 Notifications</h3>
+
+            <div className="space-y-3">
+              {notifications.slice(0, 4).map((n) => (
+                <div
+                  key={n.id}
+                  className={`text-sm flex justify-between border-b pb-2 ${
+                    n.isRead ? "text-gray-400" : "text-gray-800"
+                  }`}
+                >
+                  <span>{n.message}</span>
+                  <span className="text-xs text-gray-400">
+                    {new Date(n.createdAt).toLocaleDateString()}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* APPLICATIONS */}
+        <div className="bg-white rounded-2xl p-6 shadow-sm">
+          <h3 className="text-lg font-semibold mb-4">My Applications</h3>
+
+          {applications.length === 0 ? (
+            <p className="text-gray-400">No applications yet</p>
+          ) : (
+            <div className="space-y-3">
+              {applications.map((app) => (
+                <div
+                  key={app.id}
+                  className="flex justify-between items-center border-b pb-3"
+                >
+                  <div>
+                    <p className="font-semibold text-gray-900">
+                      {app.job.title}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {app.job.company.name}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <span
+                      className={`text-xs px-2 py-1 rounded-full ${badgeStyle(
+                        app.status
+                      )}`}
+                    >
+                      {app.status}
+                    </span>
+
+                    {app.matchScore && (
+                      <span className="text-xs text-green-600">
+                        {app.matchScore}% match
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* JOBS */}
+        <div className="bg-white rounded-2xl p-6 shadow-sm">
+
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold">Available Jobs</h3>
+
+            <button
+              onClick={() => router.push("/jobs")}
+              className="text-sm text-[#7A8B6A] font-semibold hover:underline"
+            >
+              View All →
+            </button>
+          </div>
+
+          <div className="space-y-3">
+            {jobs.slice(0, 5).map((job) => (
+              <div
+                key={job.id}
+                className="flex justify-between items-center border-b pb-3"
+              >
+                <div>
+                  <p className="font-semibold">{job.title}</p>
+                  <p className="text-xs text-gray-500">
+                    {job.company.name} · {job.location}
+                  </p>
+                </div>
+
+                <button
+                  onClick={() => router.push(`/jobs/${job.id}`)}
+                  className="px-3 py-1 text-xs bg-[#7A8B6A] text-white rounded-lg hover:bg-[#6c7d5c]"
+                >
+                  View
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
 }
 
-const cardStyle = {
-    background: "#fff", border: "1px solid #eee",
-    borderRadius: 10, padding: 20,
-};
-
-const tagStyle = {
-    background: "#f0f0f0", padding: "4px 10px",
-    borderRadius: 20, fontSize: 13,
-};
-
-const btnSecondary = {
-    padding: "8px 16px", background: "#fff",
-    border: "1px solid #ccc", borderRadius: 6,
-    cursor: "pointer", fontSize: 13,
-};
-
-const btnDanger = {
-    padding: "8px 16px", background: "#ff4444",
-    color: "#fff", border: "none",
-    borderRadius: 6, cursor: "pointer", fontSize: 13,
-};
-
-const btnSmall = {
-    padding: "4px 12px", background: "#000",
-    color: "#fff", border: "none",
-    borderRadius: 4, cursor: "pointer", fontSize: 12,
-};
-
-function statusBadge(status) {
-    const colors = {
-        APPLIED: { background: "#e3f2fd", color: "#1565c0" },
-        REVIEWED: { background: "#fff3e0", color: "#e65100" },
-        SHORTLISTED: { background: "#e8f5e9", color: "#2e7d32" },
-        REJECTED: { background: "#ffebee", color: "#c62828" },
-    };
-    return {
-        ...colors[status],
-        padding: "2px 8px", borderRadius: 20, fontSize: 12,
-    };
+/* STATUS BADGE */
+function badgeStyle(status) {
+  const map = {
+    APPLIED: "bg-blue-100 text-blue-700",
+    REVIEWED: "bg-yellow-100 text-yellow-700",
+    SHORTLISTED: "bg-green-100 text-green-700",
+    REJECTED: "bg-red-100 text-red-700",
+  };
+  return map[status] || "bg-gray-100 text-gray-600";
 }
