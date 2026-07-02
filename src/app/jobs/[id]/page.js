@@ -3,7 +3,8 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter, useParams } from "next/navigation";
 import {
     getJob, applyToJob, saveJob, unsaveJob,
-    getJobApplications, updateApplicationStatus, checkMyScore, getMyApplications
+    getJobApplications, updateApplicationStatus, checkMyScore, getMyApplications,
+    getApplicationCv
 } from "@/lib/api";
 
 function JobDetail() {
@@ -24,6 +25,8 @@ function JobDetail() {
     const [showScoreForm, setShowScoreForm] = useState(false);
     const [resumeFile, setResumeFile] = useState(null);
     const [checkingScore, setCheckingScore] = useState(false);
+    const [cvLoadingId, setCvLoadingId] = useState(null);
+    const [cvErrorId, setCvErrorId] = useState(null);
     const role = typeof window !== "undefined"
         ? localStorage.getItem("role") : null;
 
@@ -101,6 +104,30 @@ function JobDetail() {
         }
     };
 
+    const handleViewCv = async (applicationId) => {
+        setCvErrorId(null);
+        setCvLoadingId(applicationId);
+        try {
+            const blob = await getApplicationCv(applicationId);
+            const objectUrl = URL.createObjectURL(blob);
+            const newTab = window.open(objectUrl, "_blank");
+            // revoke after a delay so the new tab has time to load it
+            setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+            if (!newTab) {
+                setCvErrorId({ id: applicationId, message: "Popup blocked — allow popups to view the CV." });
+            }
+        } catch (err) {
+            const message = err.status === 404
+                ? "This candidate hasn't uploaded a resume yet."
+                : err.status === 403
+                ? "You don't have access to this candidate's CV."
+                : err.message || "Failed to load CV.";
+            setCvErrorId({ id: applicationId, message });
+        } finally {
+            setCvLoadingId(null);
+        }
+    };
+
     if (loading) return (
         <p style={{ padding: 40, fontFamily: "sans-serif" }}>Loading...</p>
     );
@@ -117,6 +144,8 @@ function JobDetail() {
             setScoreResult(result);
             setShowScoreForm(false);
         } catch (err) {
+            console.log(err);
+            console.log(err.message);
             setError(err.message);
         } finally {
             setCheckingScore(false);
@@ -425,7 +454,7 @@ function JobDetail() {
                             </p>
 
                             {/* Action buttons */}
-                            <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                            <div style={{ display: "flex", gap: 8, marginTop: 10, alignItems: "center", flexWrap: "wrap" }}>
                                 <span style={{ fontSize: 13, color: "#666", alignSelf: "center" }}>
                                     Update status:
                                 </span>
@@ -444,7 +473,25 @@ function JobDetail() {
                                             s === "SHORTLISTED" ? "✓ Shortlist" : "✗ Reject"}
                                     </button>
                                 ))}
+                                <button
+                                    onClick={() => handleViewCv(app.id)}
+                                    disabled={cvLoadingId === app.id}
+                                    style={{
+                                        padding: "6px 14px", fontSize: 12,
+                                        border: "1px solid #1a56db",
+                                        borderRadius: 20, cursor: cvLoadingId === app.id ? "not-allowed" : "pointer",
+                                        background: "#fff", color: "#1a56db",
+                                        opacity: cvLoadingId === app.id ? 0.6 : 1,
+                                    }}>
+                                    {cvLoadingId === app.id ? "Loading..." : "📄 View CV"}
+                                </button>
                             </div>
+
+                            {cvErrorId?.id === app.id && (
+                                <p style={{ color: "#c62828", fontSize: 12, marginTop: 6 }}>
+                                    {cvErrorId.message}
+                                </p>
+                            )}
                         </div>
                     ))}
                 </div>

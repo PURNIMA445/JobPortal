@@ -297,3 +297,35 @@ export async function checkMyScore(applicationId, resumeFile) {
 
     return handleResponse(response);
 }
+
+// Fetches a candidate's CV/resume for a given application (recruiter-only,
+// enforced server-side). Returns a Blob so the caller can preview it in an
+// <iframe>/new tab or trigger a download, and can inspect err.status for
+// 403 (not your job's applicant) or 404 (no resume uploaded) handling.
+export async function getApplicationCv(applicationId) {
+    const token = getToken();
+
+    const response = await fetch(
+        `${BASE_URL}/api/applications/${applicationId}/cv`,
+        {
+            headers: {
+                Authorization: token ? `Bearer ${token}` : "",
+            },
+        }
+    );
+
+    if (!response.ok) {
+        let message = `Error ${response.status}`;
+        try {
+            const text = await response.text();
+            message = text || message;
+        } catch {
+            // ignore parse errors, fall back to default message
+        }
+        const error = new Error(message);
+        error.status = response.status;
+        throw error;
+    }
+
+    return response.blob();
+}

@@ -18,11 +18,56 @@ function VerifyEmailContent() {
   const [countdown, setCountdown] = useState(0);
   const countdownRef = useRef(null);
 
+  // Initial load state: pending | ready | failed
+  const [initStatus, setInitStatus] = useState("pending");
+  const [initError, setInitError] = useState("");
+
   useEffect(() => {
     return () => {
       if (countdownRef.current) clearInterval(countdownRef.current);
     };
   }, []);
+
+  // On mount, send the initial OTP and gate the form on its result
+  useEffect(() => {
+    let cancelled = false;
+
+    const sendInitialOtp = async () => {
+      if (!email) {
+        setInitStatus("failed");
+        setInitError("No email address provided.");
+        return;
+      }
+
+      try {
+        const res = await fetch(
+          `http://localhost:8080/api/auth/send-verification-otp?email=${encodeURIComponent(email)}`,
+          { method: "POST" }
+        );
+        const data = await res.json().catch(() => ({}));
+
+        if (cancelled) return;
+
+        if (res.ok) {
+          setInitStatus("ready");
+        } else {
+          setInitStatus("failed");
+          setInitError(data.message || "Could not send verification code.");
+        }
+      } catch {
+        if (cancelled) return;
+        setInitStatus("failed");
+        setInitError("Network error. Please check your connection.");
+      }
+    };
+
+    sendInitialOtp();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [email]);
 
   const startResendCooldown = () => {
     setResendDisabled(true);
@@ -94,63 +139,84 @@ function VerifyEmailContent() {
     <div style={styles.wrapper}>
       <div style={styles.card}>
         <h1 style={styles.heading}>Verify your email</h1>
-        <p style={styles.subtext}>
-          A 6-digit verification code was sent to:
-        </p>
-        <p style={styles.email}>{email || "your email address"}</p>
 
-        {success ? (
-          <p style={styles.successBox}>{success}</p>
-        ) : (
+        {initStatus === "pending" && (
+          <p style={styles.subtext}>Sending verification code...</p>
+        )}
+
+        {initStatus === "failed" && (
           <>
-            <label style={styles.label} htmlFor="otp-input">
-              Enter OTP
-            </label>
-            <input
-              id="otp-input"
-              type="text"
-              inputMode="numeric"
-              maxLength={6}
-              value={otp}
-              onChange={(e) => {
-                setError("");
-                setOtp(e.target.value.replace(/\D/g, "").slice(0, 6));
-              }}
-              placeholder="123456"
-              style={styles.input}
-            />
-
-            {error && <p style={styles.errorText}>{error}</p>}
-
+            <p style={styles.errorText}>{initError}</p>
             <button
-              onClick={handleVerify}
-              disabled={loading}
-              style={{
-                ...styles.verifyBtn,
-                opacity: loading ? 0.7 : 1,
-                cursor: loading ? "not-allowed" : "pointer",
-              }}
+              onClick={() => router.push("/login")}
+              style={styles.verifyBtn}
             >
-              {loading ? "Verifying..." : "Verify"}
+              Back to Login
             </button>
+          </>
+        )}
 
-            <div style={styles.resendRow}>
-              <span style={styles.resendLabel}>Didn&apos;t receive a code?</span>
-              <button
-                onClick={handleResend}
-                disabled={resendDisabled}
-                style={{
-                  ...styles.resendBtn,
-                  opacity: resendDisabled ? 0.5 : 1,
-                  cursor: resendDisabled ? "not-allowed" : "pointer",
-                }}
-              >
-                {resendDisabled ? `Resend code (${countdown}s)` : "Resend code"}
-              </button>
-            </div>
+        {initStatus === "ready" && (
+          <>
+            <p style={styles.subtext}>
+              A 6-digit verification code was sent to:
+            </p>
+            <p style={styles.email}>{email || "your email address"}</p>
 
-            {resendMsg && <p style={styles.resendSuccess}>{resendMsg}</p>}
-            {resendError && <p style={styles.errorText}>{resendError}</p>}
+            {success ? (
+              <p style={styles.successBox}>{success}</p>
+            ) : (
+              <>
+                <label style={styles.label} htmlFor="otp-input">
+                  Enter OTP
+                </label>
+                <input
+                  id="otp-input"
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={otp}
+                  onChange={(e) => {
+                    setError("");
+                    setOtp(e.target.value.replace(/\D/g, "").slice(0, 6));
+                  }}
+                  placeholder="123456"
+                  style={styles.input}
+                />
+
+                {error && <p style={styles.errorText}>{error}</p>}
+
+                <button
+                  onClick={handleVerify}
+                  disabled={loading}
+                  style={{
+                    ...styles.verifyBtn,
+                    opacity: loading ? 0.7 : 1,
+                    cursor: loading ? "not-allowed" : "pointer",
+                  }}
+                >
+                  {loading ? "Verifying..." : "Verify"}
+                </button>
+
+                <div style={styles.resendRow}>
+                  <span style={styles.resendLabel}>Didn&apos;t receive a code?</span>
+                  <button
+                    onClick={handleResend}
+                    disabled={resendDisabled}
+                    style={{
+                      ...styles.resendBtn,
+                      opacity: resendDisabled ? 0.5 : 1,
+                      cursor: resendDisabled ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    {resendDisabled ? `Resend code (${countdown}s)` : "Resend code"}
+                  </button>
+                </div>
+
+                {resendMsg && <p style={styles.resendSuccess}>{resendMsg}</p>}
+                {resendError && <p style={styles.errorText}>{resendError}</p>}
+              </>
+            )}
           </>
         )}
       </div>

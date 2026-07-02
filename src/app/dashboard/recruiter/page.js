@@ -262,7 +262,7 @@ export default function RecruiterDashboard() {
                                     {/* Description */}
                                     <div>
                                         <label className="block text-sm font-semibold text-[#1A1A1A] mb-2">Job Description</label>
-                                        <textarea className="w-full px-4 py-3 bg-white border border-[#E5E5E0] rounded-xl text-sm focus:outline-none focus:border-[#7C9070] focus:ring-1 focus:ring-[#7C9070] transition-colors placeholder-gray-400 text-[#1A1A1A] min-h-[120px] resize-y" 
+                                        <textarea className="w-full px-4 py-3 bg-white border border-[#E5E5E0] rounded-xl text-sm focus:outline-none focus:border-[#7C9070] focus:ring-1 focus:ring-[#7C9070] transition-colors placeholder-gray-400 text-[#1A1A1A] min-h-30 resize-y" 
                                             placeholder="Describe the role, responsibilities, and ideal candidate..."
                                             value={jobForm.description} onChange={e => setJobForm(f => ({ ...f, description: e.target.value }))} />
                                     </div>

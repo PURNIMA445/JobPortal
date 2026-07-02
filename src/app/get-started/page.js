@@ -77,8 +77,9 @@ const handleSubmit = async (e) => {
         const authProvider = provider === "Google" ? googleProvider : githubProvider;
         const result = await signInWithPopup(auth, authProvider);
         const token = await result.user.getIdToken();
+        console.log("FIREBASE ID TOKEN:", token);
         
-        const endpoint = provider === "Google" ? "http://localhost:8080/api/auth/google" : "http://localhost:8080/api/auth/github";
+        const endpoint = provider === "Google" ? "http://localhost:8080/api/auth/firebase" : "http://localhost:8080/api/auth/firebase";
         
         const res = await fetch(endpoint, {
           method: "POST",
@@ -86,12 +87,24 @@ const handleSubmit = async (e) => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ 
-            token: token,
+            idToken: token,
+            allowCreate: true,
             role: role // Send the currently selected role tab
           }),
         });
 
-        if (!res.ok) throw new Error("Backend authentication failed");
+        if (!res.ok) {
+          const rawText = await res.text();
+          console.error("BACKEND ERROR RESPONSE:", rawText);
+          let parsedMessage = rawText;
+          try {
+            const parsed = JSON.parse(rawText);
+            parsedMessage = parsed.message || parsed.error || JSON.stringify(parsed);
+          } catch {
+            // not valid JSON, fall back to raw text
+          }
+          throw new Error(parsedMessage || "Backend authentication failed");
+        }
 
         const data = await res.json();
         

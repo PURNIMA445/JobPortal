@@ -79,21 +79,34 @@ export default function LoginPage() {
         const authProvider = provider === "Google" ? googleProvider : githubProvider;
         const result = await signInWithPopup(auth, authProvider);
         const token = await result.user.getIdToken();
+        console.log("FIREBASE ID TOKEN:", token);
         
         // 2. Send token to Spring Boot backend
-        const endpoint = provider === "Google" ? "http://localhost:8080/api/auth/google" : "http://localhost:8080/api/auth/github";
+        const endpoint = provider === "Google" ? "http://localhost:8080/api/auth/firebase" : "http://localhost:8080/api/auth/firebase";
         const res = await fetch(endpoint, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ 
-            token: token,
-            role: null // We pass null because existing users already have a role in the DB
+            idToken: token,
+            allowCreate: false,
+            role: "CANDIDATE" // We pass null because existing users already have a role in the DB
           }),
         });
 
-        if (!res.ok) throw new Error("Backend authentication failed");
+        if (!res.ok) {
+          const rawText = await res.text();
+          console.error("BACKEND ERROR RESPONSE:", rawText);
+          let parsedMessage = rawText;
+          try {
+            const parsed = JSON.parse(rawText);
+            parsedMessage = parsed.message || parsed.error || JSON.stringify(parsed);
+          } catch {
+            // not valid JSON, fall back to raw text
+          }
+          throw new Error(parsedMessage || "Backend authentication failed");
+        }
 
         const data = await res.json();
         
