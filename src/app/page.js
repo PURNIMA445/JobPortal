@@ -12,17 +12,20 @@ import CTASection from "@/components/sections/CTASection";
 export default function HomePage() {
   const [jobs, setJobs] = useState([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userRole, setUserRole] = useState(null);
 
   useEffect(() => {
-    // Check for auth token to dynamically render CTA
+    // Check for auth token + role once; pass both down as props
     if (typeof window !== "undefined") {
       const token = localStorage.getItem("token");
+      const role = localStorage.getItem("role");
       setIsLoggedIn(!!token);
+      setUserRole(role);
     }
 
     // Fetch jobs for dynamic count and latest opportunities section
     getAllJobs()
-      .then(data => {
+      .then((data) => {
         if (Array.isArray(data)) {
           setJobs(data.reverse()); // Reverse to show latest first (assuming ID order)
         }
@@ -32,17 +35,17 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-white font-sans text-gray-900 overflow-hidden selection:bg-[#7A8B6A] selection:text-white">
-      {/* ───── HERO & LATEST SECTION ───── */}
+
+      {/* ───── HERO & FEATURE SECTION ───── */}
       <div className="relative">
-        <HeroSection jobsCount={jobs.length} isLoggedIn={isLoggedIn} />
-        
+        <HeroSection jobsCount={jobs.length} isLoggedIn={isLoggedIn} userRole={userRole} />
 
         {/* ───── FEATURES SECTION ───── */}
-      <FeatureSection />
+        <FeatureSection />
 
-        {/* We wrap the LatestOpportunities in a container that pulls it up a bit since they originally shared the same section padding */}
+        {/* Pulls up slightly to share visual space with the hero section */}
         <div className="relative -mt-16 pb-20 md:pb-32 px-6 z-10">
-           <LatestOpportunitiesSection jobs={jobs} />
+          <LatestOpportunitiesSection jobs={jobs} />
         </div>
       </div>
 
@@ -50,7 +53,8 @@ export default function HomePage() {
       <TopCompaniesSection />
 
       {/* ───── DUAL-PATH CTA SECTION ───── */}
-      <CTASection isLoggedIn={isLoggedIn} />
+      <CTASection isLoggedIn={isLoggedIn} userRole={userRole} />
+
     </div>
   );
 }

@@ -2,22 +2,45 @@
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { getAllJobs, searchJobs } from "@/lib/api";
-
+import { getAllJobs, searchJobs, saveJob, unsaveJob, getSavedJobs } from "@/lib/api";
 const bgColors = ["bg-[#E5ECE4]", "bg-[#FBEBE5]", "bg-[#FDF4D4]"];
 const logoBgColors = ["bg-[#E3EFFF] text-[#3B82F6]", "bg-[#111111] text-white", "bg-[#FFC107] text-white"];
 
 function JobsPageContent() {
+    const handleSave = async (e, jobId) => {
+        e.stopPropagation();
+        try {
+            if (savedJobIds.has(jobId)) {
+                await unsaveJob(jobId);
+                setSavedJobIds((prev) => {
+                    const next = new Set(prev);
+                    next.delete(jobId);
+                    return next;
+                });
+            } else {
+                await saveJob(jobId);
+                setSavedJobIds((prev) => new Set(prev).add(jobId));
+            }
+        } catch (err) {
+            alert(err.message);
+        }
+    };
     const router = useRouter();
     const searchParams = useSearchParams();
-    
+    const [savedJobIds, setSavedJobIds] = useState(new Set());
+
+    useEffect(() => {
+        getSavedJobs()
+            .then((saved) => setSavedJobIds(new Set(saved.map((j) => j.id))))
+            .catch(() => {});
+    }, []);
     const [jobs, setJobs] = useState([]);
     const [loading, setLoading] = useState(true);
-    
+
     // Initialize state from URL params
     const initialKeyword = searchParams.get("keyword") || searchParams.get("title") || "";
     const initialLocation = searchParams.get("location") || "";
-    
+
     const [keyword, setKeyword] = useState(initialKeyword);
     const [location, setLocation] = useState(initialLocation);
     const [selectedJobType, setSelectedJobType] = useState("");
@@ -134,10 +157,10 @@ function JobsPageContent() {
                             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                         />
                     </div>
-                    
+
                     <div className="hidden lg:block w-px h-8 bg-gray-200 mx-2 shrink-0"></div>
                     <div className="w-full lg:hidden h-px bg-gray-100 my-1"></div>
-                    
+
                     <div className="flex-1 flex items-center px-4 w-full lg:w-auto">
                         <MapPinIcon className="w-5 h-5 text-gray-400 mr-3 shrink-0" />
                         <input
@@ -153,8 +176,8 @@ function JobsPageContent() {
                     <div className="w-full lg:hidden h-px bg-gray-100 my-1"></div>
 
                     <div className="flex-1 flex items-center px-4 w-full lg:w-auto relative group">
-                        <select 
-                            value={selectedJobType} 
+                        <select
+                            value={selectedJobType}
                             onChange={(e) => setSelectedJobType(e.target.value)}
                             className="w-full bg-transparent text-gray-700 py-2 focus:outline-none cursor-pointer appearance-none pr-8"
                         >
@@ -171,8 +194,8 @@ function JobsPageContent() {
                     <div className="w-full lg:hidden h-px bg-gray-100 my-1"></div>
 
                     <div className="flex-1 flex items-center px-4 w-full lg:w-auto relative group">
-                        <select 
-                            value={selectedExperience} 
+                        <select
+                            value={selectedExperience}
                             onChange={(e) => setSelectedExperience(e.target.value)}
                             className="w-full bg-transparent text-gray-700 py-2 focus:outline-none cursor-pointer appearance-none pr-8"
                         >
@@ -237,9 +260,16 @@ function JobsPageContent() {
                                             <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-xl ${logoBgColors[idx % 3]}`}>
                                                 {idx === 0 ? <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3L2 21h20L12 3zm0 4.2L17.2 18H6.8L12 7.2z" /></svg> : job.company?.name ? job.company.name.charAt(0) : "W"}
                                             </div>
-                                            <button className="text-gray-400 hover:text-gray-900 transition-colors">
-                                                <BookmarkIcon className="w-5 h-5" />
-                                            </button>
+                                            <button
+    onClick={(e) => handleSave(e, job.id)}
+    className={`p-2 rounded-full border transition-colors ${
+        savedJobIds.has(job.id)
+            ? "bg-black text-white border-black"
+            : "bg-white text-gray-700 border-gray-300 hover:border-black"
+    }`}
+>
+    <BookmarkIcon className="w-5 h-5" />
+</button>
                                         </div>
 
                                         <h3 className="text-lg font-bold text-gray-900 mb-1 line-clamp-1">
@@ -258,9 +288,7 @@ function JobsPageContent() {
                                             <span className="bg-[#FDFBF7] border border-[#EAE5D9] text-gray-700 px-3 py-1 rounded-full text-xs font-semibold">
                                                 {job.jobType ? job.jobType.replace('_', '-').toLowerCase().replace(/\b\w/g, l => l.toUpperCase()) : "Full-time"}
                                             </span>
-                                            <span className="bg-[#FDFBF7] border border-[#EAE5D9] text-gray-700 px-3 py-1 rounded-full text-xs font-semibold">
-                                                {idx % 2 === 0 ? "Remote" : (idx % 3 === 0 ? "Hybrid" : "On-site")}
-                                            </span>
+
                                         </div>
                                     </div>
                                 </motion.div>
@@ -286,7 +314,7 @@ export default function JobsPage() {
 }
 
 // ---- SVGs ----
-function ChevronDownIcon(props) { return <svg fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" {...props}><path d="m6 9 6 6 6-6"/></svg>; }
+function ChevronDownIcon(props) { return <svg fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" {...props}><path d="m6 9 6 6 6-6" /></svg>; }
 function LoaderIcon(props) { return <svg fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" {...props}><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>; }
 function SearchIcon(props) { return <svg fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" {...props}><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>; }
 function MapPinIcon(props) { return <svg fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" {...props}><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>; }
@@ -315,7 +343,7 @@ function CircularStamp() {
 
 function EnvelopeGraphic() {
     return (
-        <div className="absolute top-0 right-0 w-[400px] h-[300px] overflow-hidden pointer-events-none hidden md:block opacity-90">
+        <div className="absolute top-0 right-0 w-100 h-75 overflow-hidden pointer-events-none hidden md:block opacity-90">
             <motion.div
                 initial={{ opacity: 0, x: 100, y: -100 }}
                 animate={{ opacity: 1, x: 0, y: 0 }}

@@ -61,9 +61,9 @@ export default function TopCompaniesSection({
                 viewport={{ once: true }}
                 whileHover={{ y: -5 }}
                 onClick={() => router.push(`/jobs?keyword=${encodeURIComponent(company.name)}`)}
-                className="bg-white rounded-[2rem] p-6 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer group border border-gray-100 relative overflow-hidden flex flex-col h-full"
+                className="bg-white rounded-4xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer group border border-gray-100 relative overflow-hidden flex flex-col h-full"
               >
-                <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#7D9976] to-[#A7B99A] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="absolute top-0 left-0 right-0 h-1.5 bg-linear-to-r from-[#7D9976] to-[#A7B99A] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
                 <div className="flex items-start justify-between mb-6">
                   <div className="w-16 h-16 rounded-2xl bg-[#FDFBF7] flex items-center justify-center shadow-sm border border-[#EAE5D9] overflow-hidden group-hover:scale-105 transition-transform duration-300">

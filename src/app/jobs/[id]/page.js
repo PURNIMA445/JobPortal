@@ -1,11 +1,7 @@
 "use client";
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useParams } from "next/navigation";
-import {
-    getJob, applyToJob, saveJob, unsaveJob,
-    getJobApplications, updateApplicationStatus, checkMyScore, getMyApplications,
-    getApplicationCv
-} from "@/lib/api";
+import {getJob, applyToJob, saveJob, unsaveJob,getJobApplications, updateApplicationStatus, checkMyScore, getMyApplications,getApplicationCv,uploadResume, getCandidateProfile} from "@/lib/api";
 
 function JobDetail() {
     const router = useRouter();
@@ -27,6 +23,9 @@ function JobDetail() {
     const [checkingScore, setCheckingScore] = useState(false);
     const [cvLoadingId, setCvLoadingId] = useState(null);
     const [cvErrorId, setCvErrorId] = useState(null);
+    const [hasResume, setHasResume] = useState(false);
+const [resumeUploadFile, setResumeUploadFile] = useState(null);
+const [uploadingResume, setUploadingResume] = useState(false);
     const role = typeof window !== "undefined"
         ? localStorage.getItem("role") : null;
 
@@ -43,6 +42,9 @@ function JobDetail() {
             }
         
             if (role === "CANDIDATE") {
+                getCandidateProfile().then(prof => {
+        setHasResume(!!prof.resumeUrl);
+    }).catch(console.error);
                 // check if already applied
                 getMyApplications().then(apps => {
                     const existing = apps.find(a => a.job.id === parseInt(id));
@@ -151,6 +153,19 @@ function JobDetail() {
             setCheckingScore(false);
         }
     };
+    const handleUploadResumeThenShowApply = async () => {
+        if (!resumeUploadFile) return setError("Please select a resume file");
+        setUploadingResume(true);
+        setError(null);
+        try {
+            await uploadResume(resumeUploadFile);
+            setHasResume(true);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setUploadingResume(false);
+        }
+    };
     return (
         <div style={{ fontFamily: "sans-serif", padding: 24, maxWidth: 800, margin: "0 auto" }}>
             <button onClick={() => router.back()} style={{ ...btnSecondary, marginBottom: 20 }}>
@@ -227,11 +242,34 @@ function JobDetail() {
 
         {/* Not applied yet */}
         {!applied && job.status === "OPEN" && (
-            <>
-                <button onClick={handleSave}
-                    style={{ ...btnSecondary, marginRight: 12 }}>
-                    {saved ? "★ Saved" : "☆ Save Job"}
+    <>
+        <button onClick={handleSave}
+            style={{ ...btnSecondary, marginRight: 12 }}>
+            {saved ? "★ Saved" : "☆ Save Job"}
+        </button>
+
+        {!hasResume ? (
+            <div style={{
+                border: "1px solid #eee", borderRadius: 8, padding: 16, marginTop: 16
+            }}>
+                <p style={{ fontSize: 14, marginBottom: 10 }}>
+                    You need to upload your resume before applying to this job.
+                </p>
+                <input
+                    type="file"
+                    accept=".pdf,.doc,.docx"
+                    onChange={e => setResumeUploadFile(e.target.files[0])}
+                    style={{ display: "block", marginBottom: 12 }}
+                />
+                <button
+                    onClick={handleUploadResumeThenShowApply}
+                    disabled={uploadingResume}
+                    style={btnPrimary}>
+                    {uploadingResume ? "Uploading..." : "Upload Resume"}
                 </button>
+            </div>
+        ) : (
+            <>
                 <button onClick={() => setShowApplyForm(!showApplyForm)}
                     style={btnPrimary}>
                     {showApplyForm ? "Cancel" : "Apply Now"}
@@ -256,6 +294,8 @@ function JobDetail() {
                 )}
             </>
         )}
+    </>
+)}
 
         {/* Already applied */}
         {applied && (

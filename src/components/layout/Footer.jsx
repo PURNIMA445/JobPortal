@@ -49,7 +49,7 @@ export default function Footer() {
             <h1 className="font-serif text-3xl font-bold">सीपसेतु</h1>
 
             <motion.div
-              className="w-12 h-[2px] bg-[#7A8B6A] mt-2"
+              className="w-12 h-0.5 bg-[#7A8B6A] mt-2"
               animate={{ width: ["0%", "100%", "60%"] }}
               transition={{ duration: 2, repeat: Infinity }}
             />

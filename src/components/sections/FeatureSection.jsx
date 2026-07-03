@@ -34,7 +34,7 @@ export default function FeatureSection() {
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: i * 0.1 }}
               whileHover={{ y: -8 }}
-              className="relative p-2.5 rounded-[2rem] bg-[#E5ECE4] shadow-sm transition-transform duration-300 group"
+              className="relative p-2.5 rounded-4xl bg-[#E5ECE4] shadow-sm transition-transform duration-300 group"
             >
               <BrassTack />
               <div className="bg-white rounded-3xl p-8 h-full border border-white/50 shadow-sm relative flex flex-col">

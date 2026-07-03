@@ -179,10 +179,10 @@ export default function RecruitersLanding() {
             </p>
           </div>
 
-          <div className="bg-[#FDFBF7] rounded-[2rem] shadow-sm border border-[#E8E1D5] overflow-hidden flex flex-col lg:flex-row">
+          <div className="bg-[#FDFBF7] rounded-4xl shadow-sm border border-[#E8E1D5] overflow-hidden flex flex-col lg:flex-row">
             
             {/* LEFT PANEL: CONTROL PANEL */}
-            <div className="w-full lg:w-[380px] bg-white border-r border-[#E8E1D5] p-8 flex flex-col relative z-10">
+            <div className="w-full lg:w-95 bg-white border-r border-[#E8E1D5] p-8 flex flex-col relative z-10">
               <h3 className="text-[11px] font-bold text-[#A3AEA0] uppercase tracking-widest mb-6">Calibration Controls</h3>
               
               <div className="space-y-6 flex-1">
@@ -258,7 +258,7 @@ export default function RecruitersLanding() {
                 </span>
               </div>
 
-              <div className="relative min-h-[400px]">
+              <div className="relative min-h-100">
                 {/* Scanning Overlay */}
                 <AnimatePresence>
                   {isScanning && (
@@ -377,7 +377,7 @@ export default function RecruitersLanding() {
                         </div>
                       </div>
                       
-                      <p className="text-sm text-[#1C1F1A] mb-6 line-clamp-3 leading-relaxed flex-grow">
+                      <p className="text-sm text-[#1C1F1A] mb-6 line-clamp-3 leading-relaxed grow">
                         {candidate.bio || "Experienced professional seeking new opportunities in a dynamic environment."}
                       </p>
 
@@ -438,7 +438,7 @@ export default function RecruitersLanding() {
                   </div>
 
                   {/* Teaser Card 2 */}
-                  <div className="bg-white p-8 rounded-3xl border border-[#E8E1D5] shadow-sm relative overflow-hidden flex flex-col h-full hidden md:flex">
+                  <div className="bg-white p-8 rounded-3xl border border-[#E8E1D5] shadow-sm relative overflow-hidden flex flex-col h-full md:flex">
                     <div className="flex items-center gap-5 mb-6 select-none opacity-60">
                       <div className="w-16 h-16 bg-gray-200 rounded-full shrink-0 filter blur-sm"></div>
                       <div className="flex-1 filter blur-sm">
@@ -459,7 +459,7 @@ export default function RecruitersLanding() {
                   </div>
 
                   {/* Teaser Card 3 */}
-                  <div className="bg-white p-8 rounded-3xl border border-[#E8E1D5] shadow-sm relative overflow-hidden flex flex-col h-full hidden lg:flex">
+                  <div className="bg-white p-8 rounded-3xl border border-[#E8E1D5] shadow-sm relative overflow-hidden flex flex-col h-full lg:flex">
                     <div className="flex items-center gap-5 mb-6 select-none opacity-60">
                       <div className="w-16 h-16 bg-gray-200 rounded-full shrink-0 filter blur-sm"></div>
                       <div className="flex-1 filter blur-sm">
@@ -481,7 +481,7 @@ export default function RecruitersLanding() {
                 </div>
 
                 {/* Glassmorphism Lock Overlay */}
-                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/30 backdrop-blur-[4px] rounded-[2rem]">
+                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/30 backdrop-blur-xs rounded-4xl">
                   <div className="bg-white p-8 rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.1)] border border-[#E8E1D5] text-center max-w-sm transform transition-transform hover:scale-105 duration-300">
                     <div className="w-16 h-16 bg-[#FDFBF7] rounded-full flex items-center justify-center mx-auto mb-6 border border-[#E8E1D5] shadow-inner">
                       <svg className="w-7 h-7 text-[#7A8B6A]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>

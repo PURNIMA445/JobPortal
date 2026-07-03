@@ -329,3 +329,78 @@ export async function getApplicationCv(applicationId) {
 
     return response.blob();
 }
+
+// ─── Assumed Endpoints for Candidate Redesign ─────────────────────────────────
+
+export async function getRecommendedJobs() {
+    const response = await fetch(`${BASE_URL}/api/jobs/recommended`, {
+        headers: authHeaders(),
+    });
+    return handleResponse(response);
+}
+
+export async function getDashboardStats() {
+    const response = await fetch(`${BASE_URL}/api/dashboard`, {
+        headers: authHeaders(),
+    });
+    return handleResponse(response);
+}
+
+export async function getRecentActivity() {
+    const response = await fetch(`${BASE_URL}/api/activity`, {
+        headers: authHeaders(),
+    });
+    return handleResponse(response);
+}
+
+export async function getUpcomingInterviews() {
+    const response = await fetch(`${BASE_URL}/api/interviews`, {
+        headers: authHeaders(),
+    });
+    return handleResponse(response);
+}
+
+export async function getSkillAnalysis() {
+    const response = await fetch(`${BASE_URL}/api/skills/analysis`, {
+        headers: authHeaders(),
+    });
+    return handleResponse(response);
+}
+
+export async function getMessages() {
+    const response = await fetch(`${BASE_URL}/api/messages`, {
+        headers: authHeaders(),
+    });
+    return handleResponse(response);
+}
+export async function changePassword({ currentPassword, newPassword }) {
+    const response = await fetch(`${BASE_URL}/api/auth/change-password`, {
+        method: "PATCH",
+        headers: authHeaders(),
+        body: JSON.stringify({ currentPassword, newPassword }),
+    });
+    return handleResponse(response);
+}
+
+export async function deleteAccount() {
+    const response = await fetch(`${BASE_URL}/api/auth/account`, {
+        method: "DELETE",
+        headers: authHeaders(),
+    });
+    return handleResponse(response);
+}
+export async function uploadResume(resumeFile) {
+    const token = getToken();
+    const formData = new FormData();
+    formData.append("resume", resumeFile);
+
+    const response = await fetch(`${BASE_URL}/api/candidate/resume`, {
+        method: "POST",
+        headers: {
+            Authorization: token ? `Bearer ${token}` : "",
+        },
+        body: formData,
+    });
+
+    return handleResponse(response);
+}

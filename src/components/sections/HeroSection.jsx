@@ -1,17 +1,24 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
-export default function HeroSection({ jobsCount = 0, isLoggedIn = false }) {
-  const [userRole, setUserRole] = useState(null);
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setUserRole(localStorage.getItem("role"));
-    }
-  }, []);
+/**
+ * Returns the correct dashboard URL for the logged-in user's role.
+ */
+function getDashboardLink(userRole) {
+  return userRole === "RECRUITER" ? "/dashboard/recruiter" : "/dashboard/candidate";
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+
+export default function HeroSection({ jobsCount = 0, isLoggedIn = false, userRole = null }) {
+  const dashboardLink = getDashboardLink(userRole);
+  const primaryHref = isLoggedIn ? dashboardLink : "/get-started";
+  const primaryLabel = isLoggedIn ? "Go to Dashboard" : "Get Started";
+
   return (
     <section className="relative pt-28 pb-20 md:pt-36 md:pb-32 px-6">
       {/* Background Decorative Shapes */}
@@ -47,7 +54,9 @@ export default function HeroSection({ jobsCount = 0, isLoggedIn = false }) {
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#7A8B6A] opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#7A8B6A]"></span>
           </span>
-          {jobsCount > 0 ? `Over ${jobsCount} new opportunities this week` : "Discover new opportunities this week"}
+          {jobsCount > 0
+            ? `Over ${jobsCount} new opportunities this week`
+            : "Discover new opportunities this week"}
         </motion.div>
 
         <motion.h1
@@ -57,9 +66,10 @@ export default function HeroSection({ jobsCount = 0, isLoggedIn = false }) {
           className="text-5xl md:text-7xl font-serif font-bold tracking-tight text-gray-900 leading-[1.1] mb-6"
         >
           Where your next <br className="hidden md:block" />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#7A8B6A] to-[#A7B99A]">
+          <span className="text-transparent bg-clip-text bg-linear-to-r from-[#7A8B6A] to-[#A7B99A]">
             great opportunity
-          </span> awaits.
+          </span>{" "}
+          awaits.
         </motion.h1>
 
         <motion.p
@@ -68,7 +78,8 @@ export default function HeroSection({ jobsCount = 0, isLoggedIn = false }) {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="text-lg md:text-xl text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed"
         >
-          We bridge the gap between exceptional talent and forward-thinking companies. Join our community to find work that feels like you.
+          We bridge the gap between exceptional talent and forward-thinking
+          companies. Join our community to find work that feels like you.
         </motion.p>
 
         <motion.div
@@ -77,12 +88,15 @@ export default function HeroSection({ jobsCount = 0, isLoggedIn = false }) {
           transition={{ duration: 0.6, delay: 0.3 }}
           className="flex flex-col sm:flex-row items-center justify-center gap-4"
         >
-          <Link href={isLoggedIn ? (userRole === "RECRUITER" ? "/dashboard/recruiter" : "/dashboard/candidate") : "/get-started"}>
+          <Link href={primaryHref}>
             <button className="w-full sm:w-auto px-8 py-4 bg-[#7A8B6A] hover:bg-[#6c7d5c] text-white rounded-xl font-medium text-lg transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 flex items-center justify-center gap-2">
-              {isLoggedIn ? "Go to Dashboard" : "Get Started"}
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+              {primaryLabel}
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
             </button>
           </Link>
+
           <Link href="/jobs">
             <button className="w-full sm:w-auto px-8 py-4 bg-white border border-[#E8E1D5] hover:bg-[#F5F2EB] text-gray-800 rounded-xl font-medium text-lg transition-all shadow-sm flex items-center justify-center gap-2">
               Explore Jobs
