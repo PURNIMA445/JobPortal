@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import JobCard from "@/components/ui/JobCard";
+import RichJobCard from "@/components/ui/RichJobCard";
 
 export default function LatestOpportunitiesSection({ jobs = [] }) {
   const router = useRouter();
@@ -23,9 +23,8 @@ export default function LatestOpportunitiesSection({ jobs = [] }) {
       {jobs.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-2 md:px-0">
           {jobs.slice(0, 3).map((job, idx) => (
-            <JobCard
+            <RichJobCard
               key={job.id}
-              variant="rich"
               job={job}
               idx={idx}
               onClick={() => router.push(`/jobs/${job.id}`)}

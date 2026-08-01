@@ -33,19 +33,19 @@ export default function TopCompaniesSection({
   return (
     <section className="w-full">
       {/* ───── BEIGE HEADER SECTION ───── */}
-      <div className="pt-16 pb-8 bg-[#FDFBF7]">
+      <div className="pt-16 pb-8 bg-[#7A8B6A]">
         <div className="max-w-6xl mx-auto px-6 text-center">
           <h2 className="text-3xl md:text-4xl font-serif font-medium text-[#1C1F1A] mb-3">
             {title}
           </h2>
-          <p className="text-[#6B7264] text-base md:text-lg max-w-2xl mx-auto">
+          <p className="text-[#FDFBF7] text-base md:text-lg max-w-2xl mx-auto">
             {subtitle}
           </p>
         </div>
       </div>
 
       {/* ───── GREEN CARDS SECTION ───── */}
-      <div className="py-10 md:py-16 bg-[#7A8B6A] relative overflow-hidden">
+      <div className="py-10 md:py-16 bg-[#E5ECE4] relative overflow-hidden">
         {/* Decorative background shapes */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-[80px] pointer-events-none"></div>
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#E8C98E]/10 rounded-full blur-[80px] pointer-events-none"></div>

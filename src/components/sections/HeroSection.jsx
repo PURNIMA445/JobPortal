@@ -9,7 +9,7 @@ import { motion } from "framer-motion";
  * Returns the correct dashboard URL for the logged-in user's role.
  */
 function getDashboardLink(userRole) {
-  return userRole === "RECRUITER" ? "/dashboard/recruiter" : "/dashboard/candidate";
+  return userRole === "ADMIN" ? "/dashboard/admin" : userRole === "RECRUITER" ? "/dashboard/recruiter" : "/dashboard/candidate";
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
