@@ -1,63 +1,149 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { getNotifications, markAllRead } from "@/lib/api";
+
+const getNotificationStyle = (message, isRead) => {
+  const msg = message.toLowerCase();
+  
+  if (msg.includes("applied") || msg.includes("accepted")) {
+    return {
+      iconBg: isRead ? "bg-emerald-50" : "bg-emerald-100",
+      iconText: isRead ? "text-emerald-500" : "text-emerald-600",
+      badgeBg: "bg-emerald-50",
+      badgeText: "text-emerald-600",
+      border: isRead ? "border-[#E8E1D5]" : "border-emerald-200",
+      cardBg: isRead ? "bg-transparent" : "bg-white",
+      hoverRing: "group-hover:text-emerald-500"
+    };
+  }
+  if (msg.includes("reviewed") || msg.includes("update")) {
+    return {
+      iconBg: isRead ? "bg-amber-50" : "bg-amber-100",
+      iconText: isRead ? "text-amber-500" : "text-amber-600",
+      badgeBg: "bg-amber-50",
+      badgeText: "text-amber-600",
+      border: isRead ? "border-[#E8E1D5]" : "border-amber-200",
+      cardBg: isRead ? "bg-transparent" : "bg-white",
+      hoverRing: "group-hover:text-amber-500"
+    };
+  }
+  if (msg.includes("withdrawn") || msg.includes("rejected")) {
+    return {
+      iconBg: isRead ? "bg-rose-50" : "bg-rose-100",
+      iconText: isRead ? "text-rose-400" : "text-rose-600",
+      badgeBg: "bg-rose-50",
+      badgeText: "text-rose-600",
+      border: isRead ? "border-[#E8E1D5]" : "border-rose-200",
+      cardBg: isRead ? "bg-transparent" : "bg-white",
+      hoverRing: "group-hover:text-rose-500"
+    };
+  }
+  if (msg.includes("system") || msg.includes("new")) {
+    return {
+      iconBg: isRead ? "bg-blue-50" : "bg-blue-100",
+      iconText: isRead ? "text-blue-500" : "text-blue-600",
+      badgeBg: "bg-blue-50",
+      badgeText: "text-blue-600",
+      border: isRead ? "border-[#E8E1D5]" : "border-blue-200",
+      cardBg: isRead ? "bg-transparent" : "bg-white",
+      hoverRing: "group-hover:text-blue-500"
+    };
+  }
+  
+  // Default
+  return {
+    iconBg: isRead ? "bg-[#FDFBF7]" : "bg-[#EEF4EC]",
+    iconText: isRead ? "text-gray-400" : "text-[#7A8B6A]",
+    badgeBg: isRead ? "bg-gray-100" : "bg-[#7A8B6A]/10",
+    badgeText: isRead ? "text-gray-500" : "text-[#7A8B6A]",
+    border: isRead ? "border-[#E8E1D5]" : "border-[#C2D9BE]",
+    cardBg: isRead ? "bg-transparent" : "bg-white",
+    hoverRing: "group-hover:text-[#7A8B6A]"
+  };
+};
 
 export default function RecruiterNotificationsPage() {
   const [notifications, setNotifications] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    getNotifications()
-      .then(setNotifications)
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
+  
+  useEffect(() => { 
+    getNotifications().then(setNotifications).catch(console.error); 
   }, []);
 
-  const handleMarkAllRead = async () => {
-    try {
-      await markAllRead();
-      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-    } catch (err) {
-      alert(err.message);
-    }
-  };
-
-  if (loading) return <p>Loading notifications...</p>;
-  if (error) return <p>Error: {error}</p>;
+  const unreadCount = notifications.filter(n => !n.isRead).length;
 
   return (
-    <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h1>Notifications</h1>
-        <button onClick={handleMarkAllRead}>Mark all as read</button>
+    <div className="max-w-4xl space-y-6 mx-auto">
+      <div className="flex items-end justify-between">
+        <div>
+          <h1 className="text-3xl font-serif font-medium text-gray-900 mb-1">Notifications</h1>
+          <p className="text-[#6B7264]">Stay updated on your job postings and applicants.</p>
+        </div>
+        {unreadCount > 0 && (
+          <button 
+            onClick={() => { 
+              markAllRead(); 
+              setNotifications(p => p.map(n => ({...n, isRead: true})));
+            }} 
+            className="text-sm font-medium text-[#7A8B6A] hover:underline"
+          >
+            Mark all as read
+          </button>
+        )}
       </div>
 
-      {notifications.length === 0 ? (
-        <p>No notifications yet.</p>
-      ) : (
-        <table border="1" cellPadding="8">
-          <thead>
-            <tr>
-              <th>Message</th>
-              <th>Type</th>
-              <th>Status</th>
-              <th>Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            {notifications.map((n) => (
-              <tr key={n.id} style={{ fontWeight: n.isRead ? "normal" : "bold" }}>
-                <td>{n.message}</td>
-                <td>{n.type}</td>
-                <td>{n.isRead ? "Read" : "Unread"}</td>
-                <td>{n.createdAt ? new Date(n.createdAt).toLocaleString() : "—"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      <div className="space-y-4 mt-6">
+        {notifications.length ? notifications.map((n) => {
+          const style = getNotificationStyle(n.message, n.isRead);
+          
+          return (
+          <Link 
+            key={n.id} 
+            href={n.jobId ? `/dashboard/recruiter/jobs/${n.jobId}/applicants` : "#"} 
+            className={`group flex items-start sm:items-center justify-between gap-4 p-5 rounded-2xl border transition-all ${style.cardBg} ${style.border} hover:bg-white hover:shadow-md ${!n.isRead ? 'shadow-sm' : ''}`}
+          >
+            <div className="flex items-center gap-4">
+              <div className={`shrink-0 w-12 h-12 rounded-full flex items-center justify-center ${style.iconBg} ${style.iconText}`}>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  {n.type?.includes('APPLICATION') 
+                    ? <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    : <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405C18.21 14.79 18 13.9 18 13V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v2c0 .9-.21 1.79-.595 2.595L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                  }
+                </svg>
+              </div>
+              <div>
+                <p className={`text-base leading-tight ${!n.isRead ? 'font-medium text-gray-900' : 'text-gray-700'}`}>
+                  {n.message}
+                </p>
+                <div className="flex items-center gap-2 mt-2">
+                  <span className={`text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-md ${style.badgeBg} ${style.badgeText}`}>
+                    {n.type?.replace("_", " ") || "UPDATE"}
+                  </span>
+                  {n.createdAt && (
+                    <span className="text-gray-400 text-xs font-medium">• {new Date(n.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
+                  )}
+                </div>
+              </div>
+            </div>
+            {n.jobId && (
+              <div className={`hidden sm:flex shrink-0 w-10 h-10 rounded-xl items-center justify-center bg-gray-50 text-gray-400 group-hover:bg-gray-100 ${style.hoverRing} transition-colors`}>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+              </div>
+            )}
+          </Link>
+        )}) : (
+          <div className="bg-white rounded-3xl border border-[#E8E1D5] p-12 text-center shadow-sm">
+            <svg className="w-16 h-16 mx-auto text-[#E8E1D5] mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M15 17h5l-1.405-1.405C18.21 14.79 18 13.9 18 13V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v2c0 .9-.21 1.79-.595 2.595L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+            <h3 className="text-xl font-serif text-gray-900 mb-2">You're all caught up</h3>
+            <p className="text-gray-500">You have no new notifications at this time.</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

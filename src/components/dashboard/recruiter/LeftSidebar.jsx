@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LeafIcon, UsersIcon, BellIcon, SettingsIcon, BriefcaseIcon
+  LeafIcon, UsersIcon, BellIcon, SettingsIcon, BriefcaseIcon, PlusIcon
 } from "@/components/dashboard/icons";
 
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/dashboard/recruiter", icon: LeafIcon },
+  { label: "Post a Job", href: "/dashboard/recruiter/jobs/create", icon: PlusIcon },
   { label: "Applicants", href: "/dashboard/recruiter/applicants", icon: UsersIcon },
   { label: "Notifications", href: "/dashboard/recruiter/notifications", icon: BellIcon },
   { label: "Company Profile", href: "/recruiter/setup", icon: BriefcaseIcon },

@@ -8,12 +8,14 @@ import {
   closeJob, createJob, getAllSkills,
 } from "@/lib/api";
 
-import DashboardHeader  from "@/components/dashboard/recruiter/DashboardHeader";
-import StatsRow         from "@/components/dashboard/recruiter/StatsRow";
-import PostJobForm      from "@/components/dashboard/recruiter/PostJobForm";
-import JobList          from "@/components/dashboard/recruiter/JobList";
-import ActivitySidebar  from "@/components/dashboard/recruiter/ActivitySidebar";
-import { LoaderIcon }   from "@/components/dashboard/icons";
+import {
+  DashboardHeader,
+  PostJobForm,
+  JobList,
+  LeftSidebar,
+  RightSidebar
+} from "@/components/dashboard/recruiter";
+import { LoaderIcon } from "@/components/dashboard/icons";
 
 // ─── Initial form state ───────────────────────────────────────────────────────
 
@@ -30,17 +32,17 @@ export default function RecruiterDashboard() {
   const router = useRouter();
 
   // ── Data state ──────────────────────────────────────────────────────────────
-  const [profile,       setProfile]       = useState(null);
-  const [jobs,          setJobs]          = useState([]);
+  const [profile, setProfile] = useState(null);
+  const [jobs, setJobs] = useState([]);
   const [notifications, setNotifications] = useState([]);
-  const [skills,        setSkills]        = useState([]);
-  const [loading,       setLoading]       = useState(true);
+  const [skills, setSkills] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   // ── Form state ──────────────────────────────────────────────────────────────
   const [showJobForm, setShowJobForm] = useState(false);
-  const [jobForm,     setJobForm]     = useState(EMPTY_FORM);
-  const [posting,     setPosting]     = useState(false);
-  const [error,       setError]       = useState(null);
+  const [jobForm, setJobForm] = useState(EMPTY_FORM);
+  const [posting, setPosting] = useState(false);
+  const [error, setError] = useState(null);
 
   // ── Data fetch ───────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -77,6 +79,15 @@ export default function RecruiterDashboard() {
     }));
 
   const handlePostJob = async () => {
+    if (!profile?.company) {
+      setError("Please link or register your company in the setup page before posting jobs.");
+      return;
+    }
+    if (profile.company.status !== "APPROVED") {
+      setError("Your company is not verified yet. You cannot post jobs.");
+      return;
+    }
+
     setPosting(true);
     setError(null);
     try {
@@ -126,9 +137,14 @@ export default function RecruiterDashboard() {
 
   // ── Render ────────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-[#F9F8F4] text-[#1C1F1A] font-sans pb-20 selection:bg-[#7C9070] selection:text-white">
-      <div className="max-w-5xl mx-auto px-6 pt-12">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      {/* Left Sidebar */}
+      <div className="hidden lg:block lg:col-span-2 xl:col-span-2">
+        <LeftSidebar />
+      </div>
 
+      {/* Center Content */}
+      <div className="col-span-1 lg:col-span-7 xl:col-span-7 flex flex-col gap-6">
         <DashboardHeader
           profile={profile}
           showJobForm={showJobForm}
@@ -137,11 +153,21 @@ export default function RecruiterDashboard() {
           onLogout={handleLogout}
         />
 
-        <StatsRow
-          totalJobs={jobs.length}
-          activeJobs={activeJobs}
-          notificationCount={notifications.length}
-        />
+        {profile?.company?.status === "PENDING_VERIFICATION" && (
+          <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl flex items-start gap-3">
+            <div className="text-amber-600 mt-0.5">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-amber-800 font-semibold text-sm mb-1">Company Pending Verification</h3>
+              <p className="text-amber-700 text-xs leading-relaxed">
+                Your company profile is currently being reviewed by our admin team. You cannot post new jobs or invite team members until verification is complete.
+              </p>
+            </div>
+          </div>
+        )}
 
         <PostJobForm
           visible={showJobForm}
@@ -154,20 +180,22 @@ export default function RecruiterDashboard() {
           onSubmit={handlePostJob}
         />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
-            <JobList
-              jobs={jobs}
-              onView={(id) => router.push(`/dashboard/recruiter/jobs/${id}/applicants`)}
-              onClose={handleCloseJob}
-              onPost={() => setShowJobForm(true)}
-            />
-          </div>
-          <div className="lg:col-span-1">
-            <ActivitySidebar notifications={notifications} />
-          </div>
-        </div>
+        <JobList
+          jobs={jobs}
+          onView={(id) => router.push(`/dashboard/recruiter/jobs/${id}/applicants`)}
+          onClose={handleCloseJob}
+          onPost={() => setShowJobForm(true)}
+        />
+      </div>
 
+      {/* Right Sidebar */}
+      <div className="col-span-1 lg:col-span-3 xl:col-span-3">
+        <RightSidebar
+          totalJobs={jobs.length}
+          activeJobs={activeJobs}
+          notifications={notifications}
+          profile={profile}
+        />
       </div>
     </div>
   );

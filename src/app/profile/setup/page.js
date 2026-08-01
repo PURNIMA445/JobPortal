@@ -1,341 +1,207 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import {
-  getAllSkills,
-  createCandidateProfile,
-  updateCandidateProfile,
-  getCandidateProfile
-} from "@/lib/api";
+import { motion } from "framer-motion";
+import { useCandidateSetup } from "@/hooks/useCandidateSetup";
+import ProjectSetupSection from "@/components/profile/ProjectSetupSection";
+
+const inputClass = "w-full px-4 py-3 bg-[#FDFBF7] border border-[#E8E1D5] rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#7A8B6A]/20 focus:border-[#7A8B6A] transition-all";
+const labelClass = "text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-2 block";
 
 export default function CandidateSetupPage() {
   const router = useRouter();
-
-  const [skills, setSkills] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-
-  const [form, setForm] = useState({
-    fullName: "",
-    phone: "",
-    location: "",
-    bio: "",
-    experienceYears: 0,
-    skillIds: [],
-    projects: [],
-  });
-
-  const [project, setProject] = useState({
-    title: "",
-    description: "",
-    techStack: "",
-    projectUrl: "",
-    complexity: "BEGINNER",
-  });
-
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const skillList = await getAllSkills();
-        setSkills(skillList);
-      } catch (err) {
-        console.error("Failed to load skills", err);
-      }
-
-      try {
-        const existing = await getCandidateProfile();
-
-        setForm({
-          fullName: existing.fullName || "",
-          phone: existing.phone || "",
-          location: existing.location || "",
-          bio: existing.bio || "",
-          experienceYears: existing.experienceYears || 0,
-          skillIds: existing.skills?.map(s => s.id) || [],
-          projects: existing.projects?.map(p => ({
-            title: p.title,
-            description: p.description || "",
-            techStack: p.techStack || "",
-            projectUrl: p.projectUrl || "",
-            complexity: p.complexity || "BEGINNER",
-          })) || [],
-        });
-      } catch {
-        // Normal behavior if profile doesn't exist yet
-      }
-    }
-
-    loadData();
-  }, []);
-
-  const toggleSkill = (id) => {
-    setForm(f => ({
-      ...f,
-      skillIds: f.skillIds.includes(id)
-        ? f.skillIds.filter(s => s !== id)
-        : [...f.skillIds, id],
-    }));
-  };
-
-  const addProject = () => {
-    if (!project.title) return;
-
-    setForm(f => ({
-      ...f,
-      projects: [...f.projects, project],
-    }));
-
-    setProject({
-      title: "",
-      description: "",
-      techStack: "",
-      projectUrl: "",
-      complexity: "BEGINNER",
-    });
-  };
-
-  const removeProject = (index) => {
-    setForm(f => ({
-      ...f,
-      projects: f.projects.filter((_, i) => i !== index),
-    }));
-  };
-
-  // --- FIXED: ADDED e.preventDefault() ---
-  const handleSubmit = async (e) => {
-    e.preventDefault(); 
-    setLoading(true);
-    setError(null);
-
-    try {
-      try {
-        await getCandidateProfile();
-        await updateCandidateProfile(form);
-      } catch {
-        await createCandidateProfile(form);
-      }
-
-      router.push("/dashboard/candidate");
-    } catch (err) {
-      setError(err.message || "Failed to save profile.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const inputClass =
-    "w-full px-4 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:border-[#7A8B6A] focus:ring-1 focus:ring-[#7A8B6A] transition";
-
-  const labelClass = "text-xs font-semibold uppercase text-gray-600 tracking-wide";
-
-  const btnClass =
-    "w-full bg-[#7A8B6A] hover:bg-[#6c7d5c] disabled:opacity-70 text-white py-3 rounded-lg font-semibold transition mt-4";
+  const {
+    skills,
+    loading,
+    error,
+    form,
+    setForm,
+    project,
+    setProject,
+    addingProject,
+    setAddingProject,
+    toggleSkill,
+    addProject,
+    removeProject,
+    handleSubmit
+  } = useCandidateSetup(router);
 
   return (
-    <div className="min-h-screen bg-[#F5F2EB] flex justify-center px-4 py-10 font-sans">
-      <div className="w-full max-w-2xl bg-white rounded-2xl shadow-sm p-8 border border-[#E8E1D5]">
+    <div className="min-h-screen bg-[#FDFBF7] flex justify-center py-12 px-4 font-sans relative overflow-hidden">
+      {/* Background Decorations */}
+      <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-[#7A8B6A]/10 to-transparent pointer-events-none" />
+      <div className="absolute -top-40 -right-40 w-96 h-96 bg-[#7A8B6A]/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-40 -left-20 w-72 h-72 bg-[#E8E1D5]/40 rounded-full blur-3xl pointer-events-none" />
 
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="w-full max-w-2xl bg-white rounded-3xl shadow-xl shadow-[#7A8B6A]/5 p-8 md:p-10 border border-[#E8E1D5] relative z-10"
+      >
         {/* HEADER */}
-        <h1 className="text-3xl font-serif font-bold text-gray-900 mb-1">
-          Set up your profile
-        </h1>
-        <p className="text-gray-500 mb-8">
-          Complete your profile to get better job matches
-        </p>
-
-        {/* FIXED: WRAPPED IN A FORM */}
-        <form className="space-y-6" onSubmit={handleSubmit}>
-
-          {/* NAME */}
-          <div>
-            <label className={labelClass}>Full Name *</label>
-            <input
-              className={inputClass}
-              value={form.fullName}
-              required // Matches backend @NotBlank
-              onChange={e => setForm(f => ({ ...f, fullName: e.target.value }))}
-              placeholder="John Doe"
-            />
+        <div className="text-center mb-10">
+          <div className="w-16 h-16 bg-[#EEF4EC] rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-sm border border-[#C2D9BE]">
+            <svg className="w-8 h-8 text-[#7A8B6A]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
           </div>
+          <h1 className="text-3xl font-serif font-medium text-[#1A1A1A] mb-2">
+            Complete your Profile
+          </h1>
+          <p className="text-[#6B7264]">
+            Build out your profile to stand out to top recruiters.
+          </p>
+        </div>
 
-          {/* PHONE & LOCATION GRID */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <div>
-              <label className={labelClass}>Phone</label>
-              <input
-                className={inputClass}
-                value={form.phone}
-                onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
-                placeholder="98XXXXXXXX"
-              />
-            </div>
-            <div>
-              <label className={labelClass}>Location</label>
-              <input
-                className={inputClass}
-                value={form.location}
-                onChange={e => setForm(f => ({ ...f, location: e.target.value }))}
-                placeholder="Kathmandu, Nepal"
-              />
-            </div>
-          </div>
-
-          {/* BIO */}
-          <div>
-            <label className={labelClass}>Bio</label>
-            <textarea
-              className={`${inputClass} resize-none`}
-              rows={3}
-              value={form.bio}
-              onChange={e => setForm(f => ({ ...f, bio: e.target.value }))}
-              placeholder="Tell us about your professional background..."
-            />
-          </div>
-
-          {/* EXPERIENCE */}
-          <div>
-            <label className={labelClass}>Experience (years)</label>
-            <input
-              type="number"
-              min="0"
-              className={`${inputClass} sm:w-1/3`}
-              value={form.experienceYears}
-              onChange={e =>
-                setForm(f => ({
-                  ...f,
-                  experienceYears: parseInt(e.target.value) || 0,
-                }))
-              }
-            />
-          </div>
-
-          {/* SKILLS */}
-          <div>
-            <label className={labelClass}>Skills</label>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {skills.map(skill => {
-                const active = form.skillIds.includes(skill.id);
-                return (
-                  <button
-                    key={skill.id}
-                    type="button"
-                    onClick={() => toggleSkill(skill.id)}
-                    className={`px-3 py-1.5 rounded-full text-sm border transition
-                      ${
-                        active
-                          ? "bg-[#7A8B6A] text-white border-[#7A8B6A]"
-                          : "bg-white text-gray-700 border-gray-200 hover:border-[#7A8B6A]"
-                      }`}
-                  >
-                    {skill.name}
-                  </button>
-                );
-              })}
-              {skills.length === 0 && (
-                <p className="text-sm text-gray-400 italic">No skills available from server.</p>
-              )}
-            </div>
-          </div>
-
-          {/* PROJECTS */}
-          <div className="pt-4 border-t border-gray-100">
-            <label className={`${labelClass} block mb-3`}>Portfolio Projects</label>
-
-            {/* List Existing Projects */}
-            <div className="space-y-3 mb-4">
-              {form.projects.map((p, i) => (
-                <div key={i} className="bg-gray-50 border border-gray-100 p-4 rounded-xl flex justify-between items-start">
-                  <div>
-                    <p className="font-bold text-gray-900">{p.title}</p>
-                    <p className="text-xs font-semibold text-[#7A8B6A] mt-1">{p.complexity}</p>
-                    {p.techStack && <p className="text-sm text-gray-600 mt-1">{p.techStack}</p>}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => removeProject(i)}
-                    className="text-red-500 hover:text-red-700 text-sm font-semibold transition"
-                  >
-                    ✕ Remove
-                  </button>
-                </div>
-              ))}
-            </div>
-
-            {/* ADD PROJECT FORM */}
-            <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-4 shadow-sm">
-              <p className="text-sm font-bold text-gray-800">Add a New Project</p>
-              
-              <input
-                className={inputClass}
-                placeholder="Project Title *"
-                value={project.title}
-                onChange={e => setProject(p => ({ ...p, title: e.target.value }))}
-              />
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {/* PERSONAL DETAILS */}
+          <div className="bg-[#FDFBF7] p-6 rounded-2xl border border-[#E8E1D5]">
+            <h2 className="text-lg font-serif font-medium text-gray-900 mb-5 flex items-center gap-2">
+              <svg className="w-5 h-5 text-[#7A8B6A]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
+              </svg>
+              Basic Information
+            </h2>
+            <div className="space-y-5">
+              <div>
+                <label className={labelClass}>Full Name <span className="text-red-400">*</span></label>
                 <input
                   className={inputClass}
-                  placeholder="Tech Stack (e.g. React, Java)"
-                  value={project.techStack}
-                  onChange={e => setProject(p => ({ ...p, techStack: e.target.value }))}
+                  value={form.fullName}
+                  required
+                  onChange={e => setForm(f => ({ ...f, fullName: e.target.value }))}
+                  placeholder="E.g. John Doe"
                 />
-                <select
-                  className={inputClass}
-                  value={project.complexity}
-                  onChange={e => setProject(p => ({ ...p, complexity: e.target.value }))}
-                >
-                  <option value="BEGINNER">Beginner</option>
-                  <option value="INTERMEDIATE">Intermediate</option>
-                  <option value="ADVANCED">Advanced</option>
-                </select>
               </div>
 
-              <input
-                className={inputClass}
-                type="url"
-                placeholder="Project URL (e.g. https://github.com/...)"
-                value={project.projectUrl}
-                onChange={e => setProject(p => ({ ...p, projectUrl: e.target.value }))}
-              />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div>
+                  <label className={labelClass}>Phone Number</label>
+                  <input
+                    className={inputClass}
+                    value={form.phone}
+                    onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
+                    placeholder="E.g. +1 234 567 890"
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Location</label>
+                  <input
+                    className={inputClass}
+                    value={form.location}
+                    onChange={e => setForm(f => ({ ...f, location: e.target.value }))}
+                    placeholder="E.g. Kathmandu, Nepal"
+                  />
+                </div>
+              </div>
 
-              <textarea
-                className={`${inputClass} resize-none`}
-                rows={2}
-                placeholder="Brief description of what you built..."
-                value={project.description}
-                onChange={e => setProject(p => ({ ...p, description: e.target.value }))}
-              />
-
-              <button
-                type="button"
-                onClick={addProject}
-                disabled={!project.title}
-                className="text-sm bg-[#F5F2EB] hover:bg-[#E8E1D5] text-[#7A8B6A] font-bold px-4 py-2 rounded-lg transition disabled:opacity-50"
-              >
-                + Add Project to List
-              </button>
+              <div>
+                <label className={labelClass}>Bio</label>
+                <textarea
+                  className={`${inputClass} resize-none py-4`}
+                  rows={3}
+                  value={form.bio}
+                  onChange={e => setForm(f => ({ ...f, bio: e.target.value }))}
+                  placeholder="Tell recruiters a bit about yourself..."
+                />
+              </div>
             </div>
           </div>
+
+          {/* EXPERIENCE & SKILLS */}
+          <div className="bg-[#FDFBF7] p-6 rounded-2xl border border-[#E8E1D5]">
+            <h2 className="text-lg font-serif font-medium text-gray-900 mb-5 flex items-center gap-2">
+              <svg className="w-5 h-5 text-[#7A8B6A]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+              Experience & Skills
+            </h2>
+            <div className="space-y-6">
+              <div>
+                <label className={labelClass}>Total Experience (Years)</label>
+                <div className="relative max-w-[200px]">
+                  <input
+                    type="number"
+                    min="0"
+                    className={`${inputClass} pr-12`}
+                    value={form.experienceYears}
+                    onChange={e => setForm(f => ({ ...f, experienceYears: parseInt(e.target.value) || 0 }))}
+                  />
+                  <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-400 font-medium">
+                    Years
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className={labelClass}>Top Skills</label>
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {skills.map(skill => {
+                    const active = form.skillIds.includes(skill.id);
+                    return (
+                      <button
+                        key={skill.id}
+                        type="button"
+                        onClick={() => toggleSkill(skill.id)}
+                        className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-sm border
+                          ${active 
+                            ? "bg-[#EEF4EC] text-[#3D6B36] border-[#C2D9BE]" 
+                            : "bg-white text-gray-600 border-[#E8E1D5] hover:border-[#7A8B6A] hover:text-[#7A8B6A]"
+                          }`}
+                      >
+                        {skill.name}
+                      </button>
+                    );
+                  })}
+                  {skills.length === 0 && (
+                    <p className="text-sm text-gray-400 italic">No skills available.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* PROJECTS SECTION */}
+          <ProjectSetupSection
+            form={form}
+            project={project}
+            setProject={setProject}
+            addingProject={addingProject}
+            setAddingProject={setAddingProject}
+            addProject={addProject}
+            removeProject={removeProject}
+          />
 
           {/* ERROR DISPLAY */}
           {error && (
-            <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100">
-              ⚠ {error}
+            <div className="p-4 bg-rose-50 text-rose-700 text-sm font-medium rounded-xl border border-rose-200 flex items-start gap-3">
+              <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              {error}
             </div>
           )}
 
-          {/* FIXED: SUBMIT BUTTON TYPE */}
-          <button
-            type="submit"
-            disabled={loading}
-            className={btnClass}
-          >
-            {loading ? "Saving Profile..." : "Save Profile →"}
-          </button>
-
+          <div className="pt-2">
+            <button 
+              type="submit"
+              disabled={loading} 
+              className="w-full bg-[#7A8B6A] hover:bg-[#687A5D] disabled:opacity-70 text-white py-4 rounded-xl font-medium transition-all shadow-md shadow-[#7A8B6A]/20 flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }}>
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </motion.div>
+              ) : (
+                <>Save Profile & Continue <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg></>
+              )}
+            </button>
+          </div>
         </form>
-      </div>
+      </motion.div>
     </div>
   );
 }

@@ -24,7 +24,7 @@ export default function ActivitySidebar({ notifications }) {
                 initial={{ opacity: 0, x: 10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: idx * 0.1 }}
-                className="flex gap-3 pb-4 border-b border-[#F4F5F2] last:border-0 last:pb-0"
+                className="flex gap-2 pb-3 border-b border-[#F4F5F2] last:border-0 last:pb-0"
               >
                 <div className="mt-1.5 shrink-0">
                   <div className="w-2 h-2 rounded-full bg-[#7C9070]" />
