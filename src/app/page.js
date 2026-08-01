@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { getAllJobs } from "@/lib/api";
+import useAuth from "@/hooks/useAuth";
 
 import HeroSection from "@/components/sections/HeroSection";
 import LatestOpportunitiesSection from "@/components/sections/LatestOpportunitiesSection";
@@ -11,17 +12,9 @@ import CTASection from "@/components/sections/CTASection";
 
 export default function HomePage() {
   const [jobs, setJobs] = useState([]);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userRole, setUserRole] = useState(null);
+  const { isLoggedIn, userRole } = useAuth();
 
   useEffect(() => {
-    // Check for auth token + role once; pass both down as props
-    if (typeof window !== "undefined") {
-      const token = localStorage.getItem("token");
-      const role = localStorage.getItem("role");
-      setIsLoggedIn(!!token);
-      setUserRole(role);
-    }
 
     // Fetch jobs for dynamic count and latest opportunities section
     getAllJobs()

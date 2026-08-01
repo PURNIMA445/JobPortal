@@ -1,585 +1,94 @@
 "use client";
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useParams } from "next/navigation";
-import {getJob, applyToJob, saveJob, unsaveJob,getJobApplications, updateApplicationStatus, checkMyScore, getMyApplications,getApplicationCv,uploadResume, getCandidateProfile} from "@/lib/api";
+import { getJob } from "@/lib/api";
+import useAuth from "@/hooks/useAuth";
+
+import CandidateJobView from "@/components/jobs/detail/CandidateJobView";
+import RecruiterJobView from "@/components/jobs/detail/RecruiterJobView";
 
 function JobDetail() {
-    const router = useRouter();
-    const { id } = useParams();
-    const [job, setJob] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [applying, setApplying] = useState(false);
-    const [coverLetter, setCoverLetter] = useState("");
-    const [showApplyForm, setShowApplyForm] = useState(false);
-    const [applied, setApplied] = useState(false);
-    const [saved, setSaved] = useState(false);
-    const [applications, setApplications] = useState([]);
-    const [error, setError] = useState(null);
-    const [success, setSuccess] = useState(null);
-    const [myApplication, setMyApplication] = useState(null);
-    const [scoreResult, setScoreResult] = useState(null);
-    const [showScoreForm, setShowScoreForm] = useState(false);
-    const [resumeFile, setResumeFile] = useState(null);
-    const [checkingScore, setCheckingScore] = useState(false);
-    const [cvLoadingId, setCvLoadingId] = useState(null);
-    const [cvErrorId, setCvErrorId] = useState(null);
-    const [hasResume, setHasResume] = useState(false);
-const [resumeUploadFile, setResumeUploadFile] = useState(null);
-const [uploadingResume, setUploadingResume] = useState(false);
-    const role = typeof window !== "undefined"
-        ? localStorage.getItem("role") : null;
+  const router = useRouter();
+  const { id } = useParams();
+  const { userRole } = useAuth();
 
-        useEffect(() => {
-            getJob(id)
-                .then(setJob)
-                .catch(console.error)
-                .finally(() => setLoading(false));
-        
-            if (role === "RECRUITER") {
-                getJobApplications(id)
-                    .then(setApplications)
-                    .catch(console.error);
-            }
-        
-            if (role === "CANDIDATE") {
-                getCandidateProfile().then(prof => {
-        setHasResume(!!prof.resumeUrl);
-    }).catch(console.error);
-                // check if already applied
-                getMyApplications().then(apps => {
-                    const existing = apps.find(a => a.job.id === parseInt(id));
-                    if (existing) {
-                        setMyApplication(existing);
-                        setApplied(true);
-                        // if score already exists show it
-                        if (existing.matchScore) {
-                            setScoreResult({
-                                matchScore: existing.matchScore,
-                                missingSkills: existing.missingSkills
-                                    ? existing.missingSkills.split(",")
-                                    : [],
-                                matchedSkills: [],
-                                suggestions: [],
-                            });
-                        }
-                    }
-                }).catch(console.error);
-            }
-        }, [id]);
-    const handleApply = async () => {
-        setApplying(true);
-        setError(null);
-        try {
-            await applyToJob(id, coverLetter);
-            setApplied(true);
-            setShowApplyForm(false);
-            setSuccess("Application submitted successfully!");
-        } catch (err) {
-            setError(err.message);
-        } finally {
-            setApplying(false);
-        }
-    };
+  // Job Data
+  const [job, setJob] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-    const handleSave = async () => {
-        try {
-            if (saved) {
-                await unsaveJob(id);
-                setSaved(false);
-            } else {
-                await saveJob(id);
-                setSaved(true);
-            }
-        } catch (err) {
-            setError(err.message);
-        }
-    };
+  useEffect(() => {
+    getJob(id)
+      .then(setJob)
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [id]);
 
-    const handleStatusUpdate = async (applicationId, status) => {
-        try {
-            const updated = await updateApplicationStatus(applicationId, status);
-            setApplications(apps =>
-                apps.map(app => app.id === applicationId ? updated : app)
-            );
-        } catch (err) {
-            setError(err.message);
-        }
-    };
-
-    const handleViewCv = async (applicationId) => {
-        setCvErrorId(null);
-        setCvLoadingId(applicationId);
-        try {
-            const blob = await getApplicationCv(applicationId);
-            const objectUrl = URL.createObjectURL(blob);
-            const newTab = window.open(objectUrl, "_blank");
-            // revoke after a delay so the new tab has time to load it
-            setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
-            if (!newTab) {
-                setCvErrorId({ id: applicationId, message: "Popup blocked — allow popups to view the CV." });
-            }
-        } catch (err) {
-            const message = err.status === 404
-                ? "This candidate hasn't uploaded a resume yet."
-                : err.status === 403
-                ? "You don't have access to this candidate's CV."
-                : err.message || "Failed to load CV.";
-            setCvErrorId({ id: applicationId, message });
-        } finally {
-            setCvLoadingId(null);
-        }
-    };
-
-    if (loading) return (
-        <p style={{ padding: 40, fontFamily: "sans-serif" }}>Loading...</p>
-    );
-
-    if (!job) return (
-        <p style={{ padding: 40, fontFamily: "sans-serif" }}>Job not found</p>
-    );
-    const handleCheckScore = async () => {
-        if (!resumeFile) return setError("Please upload your resume PDF");
-        setCheckingScore(true);
-        setError(null);
-        try {
-            const result = await checkMyScore(myApplication.id, resumeFile);
-            setScoreResult(result);
-            setShowScoreForm(false);
-        } catch (err) {
-            console.log(err);
-            console.log(err.message);
-            setError(err.message);
-        } finally {
-            setCheckingScore(false);
-        }
-    };
-    const handleUploadResumeThenShowApply = async () => {
-        if (!resumeUploadFile) return setError("Please select a resume file");
-        setUploadingResume(true);
-        setError(null);
-        try {
-            await uploadResume(resumeUploadFile);
-            setHasResume(true);
-        } catch (err) {
-            setError(err.message);
-        } finally {
-            setUploadingResume(false);
-        }
-    };
+  if (loading) {
     return (
-        <div style={{ fontFamily: "sans-serif", padding: 24, maxWidth: 800, margin: "0 auto" }}>
-            <button onClick={() => router.back()} style={{ ...btnSecondary, marginBottom: 20 }}>
-                ← Back
-            </button>
+      <div className="flex justify-center items-center h-screen bg-[#FDFBF7]">
+        <p className="text-gray-500 font-medium">Loading job details...</p>
+      </div>
+    );
+  }
 
-            {/* Job Header */}
-            <div style={cardStyle}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                    <div>
-                        <h1 style={{ margin: "0 0 6px" }}>{job.title}</h1>
-                        <p style={{ margin: 0, color: "#666" }}>
-                            {job.company.name} · {job.location}
-                        </p>
-                    </div>
-                    <span style={{
-                        padding: "4px 12px", borderRadius: 20, fontSize: 13,
-                        background: job.status === "OPEN" ? "#e8f5e9" : "#ffebee",
-                        color: job.status === "OPEN" ? "#2e7d32" : "#c62828",
-                    }}>
-                        {job.status}
-                    </span>
-                </div>
-
-                <div style={{ display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap" }}>
-                    <span style={tagStyle}>{job.jobType}</span>
-                    <span style={tagStyle}>{job.experienceLevel}</span>
-                    {job.salaryMin && (
-                        <span style={tagStyle}>
-                            ${job.salaryMin} - ${job.salaryMax}
-                        </span>
-                    )}
-                </div>
-
-                {/* Required Skills */}
-                {job.requiredSkills?.length > 0 && (
-                    <div style={{ marginTop: 16 }}>
-                        <strong style={{ fontSize: 14 }}>Required Skills</strong>
-                        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
-                            {job.requiredSkills.map(s => (
-                                <span key={s.id} style={skillTag}>{s.name}</span>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                {/* Description */}
-                <div style={{ marginTop: 20 }}>
-                    <strong>Job Description</strong>
-                    <p style={{ color: "#444", lineHeight: 1.7, marginTop: 8 }}>
-                        {job.description}
-                    </p>
-                </div>
-
-                {/* Company Info */}
-                <div style={{ marginTop: 16, padding: 16, background: "#f9f9f9", borderRadius: 8 }}>
-                    <strong>{job.company.name}</strong>
-                    <p style={{ margin: "4px 0 0", fontSize: 13, color: "#666" }}>
-                        {job.company.industry} · {job.company.location}
-                    </p>
-                    {job.company.websiteUrl && (
-                        <a href={job.company.websiteUrl} target="_blank"
-                            style={{ fontSize: 13, color: "#1a56db" }}>
-                            {job.company.websiteUrl}
-                        </a>
-                    )}
-                </div>
-
-                {/* Candidate Actions */}
-                {role === "CANDIDATE" && (
-    <div style={{ marginTop: 20 }}>
-        {success && <p style={{ color: "green" }}>{success}</p>}
-        {error && <p style={{ color: "red" }}>{error}</p>}
-
-        {/* Not applied yet */}
-        {!applied && job.status === "OPEN" && (
-    <>
-        <button onClick={handleSave}
-            style={{ ...btnSecondary, marginRight: 12 }}>
-            {saved ? "★ Saved" : "☆ Save Job"}
+  if (!job) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-[#FDFBF7] gap-4">
+        <h2 className="text-2xl font-serif text-gray-900">Job not found</h2>
+        <button
+          onClick={() => router.back()}
+          className="px-6 py-2 bg-[#7A8B6A] hover:bg-[#687A5D] text-white rounded-xl transition-all"
+        >
+          Go Back
         </button>
+      </div>
+    );
+  }
 
-        {!hasResume ? (
-            <div style={{
-                border: "1px solid #eee", borderRadius: 8, padding: 16, marginTop: 16
-            }}>
-                <p style={{ fontSize: 14, marginBottom: 10 }}>
-                    You need to upload your resume before applying to this job.
-                </p>
-                <input
-                    type="file"
-                    accept=".pdf,.doc,.docx"
-                    onChange={e => setResumeUploadFile(e.target.files[0])}
-                    style={{ display: "block", marginBottom: 12 }}
-                />
-                <button
-                    onClick={handleUploadResumeThenShowApply}
-                    disabled={uploadingResume}
-                    style={btnPrimary}>
-                    {uploadingResume ? "Uploading..." : "Upload Resume"}
-                </button>
-            </div>
-        ) : (
-            <>
-                <button onClick={() => setShowApplyForm(!showApplyForm)}
-                    style={btnPrimary}>
-                    {showApplyForm ? "Cancel" : "Apply Now"}
-                </button>
+  return (
+    <div className="min-h-screen bg-[#FDFBF7] pb-24">
+      {/* Back Button Container */}
+      <div className="max-w-6xl mx-auto px-4 md:px-8 pt-8 pb-4">
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-2 text-gray-500 hover:text-gray-900 font-medium transition-colors"
+        >
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M10 19l-7-7m0 0l7-7m-7 7h18"
+            />
+          </svg>
+          Back to Jobs
+        </button>
+      </div>
 
-                {showApplyForm && (
-                    <div style={{ marginTop: 16 }}>
-                        <label style={{ fontSize: 14 }}>
-                            Cover Letter (optional)
-                        </label>
-                        <textarea
-                            style={{ ...inputStyle, height: 100, marginTop: 6 }}
-                            placeholder="Tell the recruiter why you're a good fit..."
-                            value={coverLetter}
-                            onChange={e => setCoverLetter(e.target.value)}
-                        />
-                        <button onClick={handleApply}
-                            disabled={applying} style={btnPrimary}>
-                            {applying ? "Submitting..." : "Submit Application"}
-                        </button>
-                    </div>
-                )}
-            </>
-        )}
-    </>
-)}
-
-        {/* Already applied */}
-        {applied && (
-            <div style={{ marginTop: 8 }}>
-                <p style={{ color: "green", fontWeight: 500, marginBottom: 12 }}>
-                    ✓ Applied — Status:
-                    <span style={{ marginLeft: 8, ...statusBadge(myApplication?.status) }}>
-                        {myApplication?.status}
-                    </span>
-                </p>
-
-                {/* Score result */}
-                {scoreResult ? (
-                    <div style={{
-                        border: "1px solid #eee", borderRadius: 10,
-                        padding: 20, marginTop: 12
-                    }}>
-                        <h3 style={{ margin: "0 0 16px" }}>
-                            Your Match Score:
-                            <span style={{
-                                marginLeft: 12, fontSize: 28, fontWeight: 700,
-                                color: scoreResult.matchScore >= 70 ? "green"
-                                    : scoreResult.matchScore >= 50 ? "orange" : "red"
-                            }}>
-                                {scoreResult.matchScore}%
-                            </span>
-                        </h3>
-
-                        {/* Matched skills */}
-                        {scoreResult.matchedSkills?.length > 0 && (
-                            <div style={{ marginBottom: 14 }}>
-                                <strong style={{ fontSize: 14 }}>
-                                    ✓ Matched Skills
-                                </strong>
-                                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 6 }}>
-                                    {scoreResult.matchedSkills.map(s => (
-                                        <span key={s} style={{
-                                            background: "#e8f5e9", color: "#2e7d32",
-                                            padding: "3px 10px", borderRadius: 20, fontSize: 13
-                                        }}>
-                                            {s}
-                                        </span>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Missing skills */}
-                        {scoreResult.missingSkills?.length > 0 && (
-                            <div style={{ marginBottom: 14 }}>
-                                <strong style={{ fontSize: 14 }}>
-                                    ✗ Missing Skills
-                                </strong>
-                                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 6 }}>
-                                    {scoreResult.missingSkills.map(s => (
-                                        <span key={s} style={{
-                                            background: "#ffebee", color: "#c62828",
-                                            padding: "3px 10px", borderRadius: 20, fontSize: 13
-                                        }}>
-                                            {s}
-                                        </span>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Experience + projects */}
-                        {scoreResult.experienceMatch && (
-                            <div style={{ marginBottom: 8, fontSize: 14 }}>
-                                <strong>Experience:</strong> {scoreResult.experienceMatch}
-                            </div>
-                        )}
-                        {scoreResult.projectRelevance && (
-                            <div style={{ marginBottom: 14, fontSize: 14 }}>
-                                <strong>Projects:</strong> {scoreResult.projectRelevance}
-                            </div>
-                        )}
-
-                        {/* Suggestions */}
-                        {scoreResult.suggestions?.length > 0 && (
-                            <div style={{
-                                background: "#fff8e1", borderRadius: 8,
-                                padding: 14, marginTop: 8
-                            }}>
-                                <strong style={{ fontSize: 14 }}>
-                                    💡 Suggestions to improve:
-                                </strong>
-                                <ul style={{ margin: "8px 0 0", paddingLeft: 20 }}>
-                                    {scoreResult.suggestions.map((s, i) => (
-                                        <li key={i} style={{ fontSize: 13, marginBottom: 4 }}>
-                                            {s}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        )}
-
-                        <button
-                            onClick={() => setShowScoreForm(true)}
-                            style={{ ...btnSecondary, marginTop: 14, fontSize: 13 }}>
-                            Recheck with updated resume
-                        </button>
-                    </div>
-                ) : (
-                    /* No score yet */
-                    <div>
-                        <button
-                            onClick={() => setShowScoreForm(!showScoreForm)}
-                            style={btnPrimary}>
-                            {showScoreForm ? "Cancel" : "🎯 Check My Score"}
-                        </button>
-                    </div>
-                )}
-
-                {/* Score upload form */}
-                {showScoreForm && (
-                    <div style={{
-                        marginTop: 16, border: "1px solid #eee",
-                        borderRadius: 8, padding: 16
-                    }}>
-                        <label style={{ fontSize: 14, fontWeight: 500 }}>
-                            Upload your resume (PDF only)
-                        </label>
-                        <input
-                            type="file"
-                            accept=".pdf"
-                            onChange={e => setResumeFile(e.target.files[0])}
-                            style={{ display: "block", marginTop: 8, marginBottom: 12 }}
-                        />
-                        <button
-                            onClick={handleCheckScore}
-                            disabled={checkingScore}
-                            style={btnPrimary}>
-                            {checkingScore ? "Analyzing... ⏳" : "Analyze Resume"}
-                        </button>
-                    </div>
-                )}
-            </div>
-        )}
+      {userRole === "RECRUITER" ? (
+        <RecruiterJobView job={job} />
+      ) : (
+        <CandidateJobView job={job} />
+      )}
     </div>
-)}
-            </div>
-
-            {/* Recruiter: Applications List */}
-            {role === "RECRUITER" && (
-                <div style={{ ...cardStyle, marginTop: 24 }}>
-                    <h3>Applications ({applications.length})</h3>
-                    {applications.map(app => (
-                        <div key={app.id} style={{
-                            padding: "16px 0",
-                            borderBottom: "1px solid #eee"
-                        }}>
-                            {/* Candidate info */}
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                                <div>
-                                    <strong style={{ fontSize: 16 }}>{app.candidateName}</strong>
-                                    <span style={{ ...statusBadge(app.status), marginLeft: 10 }}>
-                                        {app.status}
-                                    </span>
-                                </div>
-                                {/* Score badges */}
-                                <div style={{ textAlign: "right" }}>
-                                    {app.matchScore
-                                        ? <div style={{ color: "green", fontWeight: 600 }}>
-                                            {app.matchScore}% match
-                                        </div>
-                                        : <div style={{ color: "#aaa", fontSize: 13 }}>
-                                            Score not checked yet
-                                        </div>
-                                    }
-                                    {app.rankScore && (
-                                        <div style={{ fontSize: 12, color: "#666" }}>
-                                            Rank score: {app.rankScore?.toFixed(1)}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Cover letter */}
-                            {app.coverLetter && (
-                                <div style={{
-                                    margin: "10px 0",
-                                    padding: 12,
-                                    background: "#f9f9f9",
-                                    borderRadius: 6,
-                                    fontSize: 13,
-                                    color: "#444"
-                                }}>
-                                    <strong>Cover Letter:</strong> {app.coverLetter}
-                                </div>
-                            )}
-
-                            {/* Applied date */}
-                            <p style={{ fontSize: 12, color: "#aaa", margin: "6px 0" }}>
-                                Applied: {new Date(app.appliedAt).toLocaleDateString()}
-                            </p>
-
-                            {/* Action buttons */}
-                            <div style={{ display: "flex", gap: 8, marginTop: 10, alignItems: "center", flexWrap: "wrap" }}>
-                                <span style={{ fontSize: 13, color: "#666", alignSelf: "center" }}>
-                                    Update status:
-                                </span>
-                                {["REVIEWED", "SHORTLISTED", "REJECTED"].map(s => (
-                                    <button key={s}
-                                        onClick={() => handleStatusUpdate(app.id, s)}
-                                        style={{
-                                            padding: "6px 14px", fontSize: 12,
-                                            border: "1px solid #ccc",
-                                            borderRadius: 20, cursor: "pointer",
-                                            background: app.status === s ? "#000" : "#fff",
-                                            color: app.status === s ? "#fff" : "#000",
-                                            fontWeight: app.status === s ? 600 : 400,
-                                        }}>
-                                        {s === "REVIEWED" ? "👁 Review" :
-                                            s === "SHORTLISTED" ? "✓ Shortlist" : "✗ Reject"}
-                                    </button>
-                                ))}
-                                <button
-                                    onClick={() => handleViewCv(app.id)}
-                                    disabled={cvLoadingId === app.id}
-                                    style={{
-                                        padding: "6px 14px", fontSize: 12,
-                                        border: "1px solid #1a56db",
-                                        borderRadius: 20, cursor: cvLoadingId === app.id ? "not-allowed" : "pointer",
-                                        background: "#fff", color: "#1a56db",
-                                        opacity: cvLoadingId === app.id ? 0.6 : 1,
-                                    }}>
-                                    {cvLoadingId === app.id ? "Loading..." : "📄 View CV"}
-                                </button>
-                            </div>
-
-                            {cvErrorId?.id === app.id && (
-                                <p style={{ color: "#c62828", fontSize: 12, marginTop: 6 }}>
-                                    {cvErrorId.message}
-                                </p>
-                            )}
-                        </div>
-                    ))}
-                </div>
-            )}
-        </div>
-    );
+  );
 }
+
 export default function JobDetailPage() {
-    return (
-        <Suspense fallback={<p style={{ padding: 40, fontFamily: "sans-serif" }}>Loading...</p>}>
-            <JobDetail />
-        </Suspense>
-    );
-}
-const cardStyle = {
-    border: "1px solid #eee", borderRadius: 10, padding: 24,
-};
-const inputStyle = {
-    display: "block", width: "100%", padding: "8px 12px",
-    border: "1px solid #ccc", borderRadius: 6,
-    fontSize: 14, boxSizing: "border-box",
-};
-const btnPrimary = {
-    padding: "10px 20px", background: "#000", color: "#fff",
-    border: "none", borderRadius: 6, cursor: "pointer", fontSize: 14,
-};
-const btnSecondary = {
-    padding: "8px 16px", background: "#fff", border: "1px solid #ccc",
-    borderRadius: 6, cursor: "pointer", fontSize: 13,
-};
-const tagStyle = {
-    background: "#f0f0f0", padding: "4px 12px",
-    borderRadius: 20, fontSize: 13,
-};
-const skillTag = {
-    background: "#e8f0fe", color: "#1a56db",
-    padding: "3px 10px", borderRadius: 20, fontSize: 13,
-};
-
-function statusBadge(status) {
-    const colors = {
-        APPLIED: { background: "#e3f2fd", color: "#1565c0" },
-        REVIEWED: { background: "#fff3e0", color: "#e65100" },
-        SHORTLISTED: { background: "#e8f5e9", color: "#2e7d32" },
-        REJECTED: { background: "#ffebee", color: "#c62828" },
-    };
-    return {
-        ...colors[status],
-        padding: "2px 8px", borderRadius: 20, fontSize: 12,
-    };
+  return (
+    <Suspense
+      fallback={
+        <div className="flex justify-center items-center h-screen bg-[#FDFBF7]">
+          <p className="text-gray-500 font-medium">Loading...</p>
+        </div>
+      }
+    >
+      <JobDetail />
+    </Suspense>
+  );
 }
