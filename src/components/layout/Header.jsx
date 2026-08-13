@@ -5,10 +5,11 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import useAuth from "@/hooks/useAuth";
-import AuthenticatedMenu from "./AuthenticatedMenu";
-import GuestAuthButtons from "./GuestAuthButtons";
+import dynamic from "next/dynamic";
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+const AuthenticatedMenu = dynamic(() => import("./AuthenticatedMenu"), { ssr: false });
+const GuestAuthButtons = dynamic(() => import("./GuestAuthButtons"), { ssr: false });
+
 
 const NAV_LINKS = [
   { href: "/explore", label: "Explore" },
@@ -17,7 +18,6 @@ const NAV_LINKS = [
   { href: "/for-recruiters", label: "Recruiters" },
 ];
 
-// ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function Header() {
   const pathname = usePathname();
@@ -91,22 +91,22 @@ export default function Header() {
 
           {/* RIGHT: DESKTOP AUTH BLOCK */}
           <div className="hidden md:flex justify-end items-center gap-3">
-            {mounted && (
-              isLoggedIn ? (
-                <AuthenticatedMenu profile={profile} dashboardLink={dashboardLink} onLogout={logout} unreadCount={unreadCount} />
-              ) : (
-                <GuestAuthButtons />
-              )
+            {(!mounted || !isLoggedIn) ? (
+              <GuestAuthButtons />
+            ) : (
+              <AuthenticatedMenu profile={profile} dashboardLink={dashboardLink} onLogout={logout} unreadCount={unreadCount} />
             )}
           </div>
 
           {/* MOBILE MENU BUTTON & AUTHENTICATED AVATAR (if logged in) */}
           <div className="md:hidden flex justify-end items-center gap-4">
-            {mounted && isLoggedIn && profile && (
-               <div className="w-8 h-8 rounded-full bg-[#7A8B6A] text-white flex items-center justify-center font-medium text-sm shadow-sm">
+            <div suppressHydrationWarning>
+              {mounted && isLoggedIn && profile && (
+                <div className="w-8 h-8 rounded-full bg-[#7A8B6A] text-white flex items-center justify-center font-medium text-sm shadow-sm">
                   {profile.fullName ? profile.fullName.charAt(0) : "U"}
-               </div>
-            )}
+                </div>
+              )}
+            </div>
             <button
               onClick={() => setMenuOpen(!menuOpen)}
               className="p-2 rounded-lg hover:bg-[#F5F2EB]"
@@ -150,32 +150,30 @@ export default function Header() {
                   </Link>
                 ))}
 
-                {mounted && (
-                  <div className="pt-3 border-t border-[#E8E1D5] flex flex-col gap-2 mt-2">
-                    {isLoggedIn ? (
-                      <>
-                        <Link href={dashboardLink} onClick={() => setMenuOpen(false)} className="block px-4 py-3 rounded-xl text-gray-700 hover:bg-gray-50 text-center border border-[#E8E1D5]">
-                          Dashboard
-                        </Link>
-                        <Link href={`${dashboardLink}/setup`} onClick={() => setMenuOpen(false)} className="block px-4 py-3 rounded-xl text-gray-700 hover:bg-gray-50 text-center border border-[#E8E1D5]">
-                          Settings
-                        </Link>
-                        <button onClick={logout} className="block w-full px-4 py-3 rounded-xl text-white bg-red-500 hover:bg-red-600 text-center mt-2">
-                          Sign Out
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <Link href="/login" onClick={() => setMenuOpen(false)} className="block px-4 py-3 rounded-xl text-gray-700 hover:bg-gray-50 text-center border border-[#E8E1D5]">
-                          Login
-                        </Link>
-                        <Link href="/get-started" onClick={() => setMenuOpen(false)} className="block px-4 py-3 rounded-xl text-white bg-[#7A8B6A] text-center">
-                          Sign Up
-                        </Link>
-                      </>
-                    )}
-                  </div>
-                )}
+                <div className="pt-3 border-t border-[#E8E1D5] flex flex-col gap-2 mt-2">
+                  {(!mounted || !isLoggedIn) ? (
+                    <>
+                      <Link href="/login" onClick={() => setMenuOpen(false)} className="block px-4 py-3 rounded-xl text-gray-700 hover:bg-gray-50 text-center border border-[#E8E1D5]">
+                        Login
+                      </Link>
+                      <Link href="/get-started" onClick={() => setMenuOpen(false)} className="block px-4 py-3 rounded-xl text-white bg-[#7A8B6A] text-center">
+                        Sign Up
+                      </Link>
+                    </>
+                  ) : (
+                    <>
+                      <Link href={dashboardLink} onClick={() => setMenuOpen(false)} className="block px-4 py-3 rounded-xl text-gray-700 hover:bg-gray-50 text-center border border-[#E8E1D5]">
+                        Dashboard
+                      </Link>
+                      <Link href={`${dashboardLink}/setup`} onClick={() => setMenuOpen(false)} className="block px-4 py-3 rounded-xl text-gray-700 hover:bg-gray-50 text-center border border-[#E8E1D5]">
+                        Settings
+                      </Link>
+                      <button onClick={logout} className="block w-full px-4 py-3 rounded-xl text-white bg-red-500 hover:bg-red-600 text-center mt-2">
+                        Sign Out
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
             </motion.div>
           )}

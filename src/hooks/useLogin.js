@@ -40,7 +40,7 @@ export function useLogin(router) {
           await getCandidateProfile();
           window.location.href = "/dashboard/candidate";
         } catch {
-          window.location.href = "/profile/setup";
+          window.location.href = "/candidate/onboarding";
         }
       } else if (data.role === "RECRUITER") {
         try {
@@ -113,7 +113,7 @@ export function useLogin(router) {
               await getCandidateProfile();
               window.location.href = "/dashboard/candidate";
             } catch {
-              window.location.href = "/profile/setup";
+              window.location.href = "/candidate/onboarding";
             }
           }
         } else if (data.role === "RECRUITER") {

@@ -16,6 +16,13 @@ export async function getCandidateProfile() {
     return handleResponse(response);
 }
 
+export async function getCandidateById(id) {
+    const response = await fetch(`${BASE_URL}/api/candidate/${id}`, {
+        headers: authHeaders(),
+    });
+    return handleResponse(response);
+}
+
 export async function updateCandidateProfile(data) {
     const response = await fetch(`${BASE_URL}/api/candidate/profile`, {
         method: "PUT",
@@ -43,6 +50,13 @@ export async function uploadResume(resumeFile) {
 
 export async function searchCandidates() {
     const response = await fetch(`${BASE_URL}/api/candidate/search`, {
+        headers: authHeaders(),
+    });
+    return handleResponse(response);
+}
+
+export async function getDashboardStats() {
+    const response = await fetch(`${BASE_URL}/api/dashboard`, {
         headers: authHeaders(),
     });
     return handleResponse(response);

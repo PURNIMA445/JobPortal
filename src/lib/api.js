@@ -12,3 +12,4 @@ export * from './services/application.service';
 export * from './services/notification.service';
 export * from './services/admin.service';
 export * from './services/common.service';
+export * from './services/ai.service';

@@ -1,7 +1,60 @@
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import {
   BriefcaseIcon, MapPinIcon, ChevronDownIcon
 } from "@/components/dashboard/icons";
+
+const BulletTextArea = ({ value, onChange, placeholder, className }) => {
+  const textareaRef = useRef(null);
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      
+      const start = e.target.selectionStart;
+      const end = e.target.selectionEnd;
+      const currentVal = value || "";
+
+      // If empty, start first bullet
+      if (currentVal.trim() === "") {
+        onChange("• ");
+        return;
+      }
+      
+      const newValue = currentVal.substring(0, start) + "\n• " + currentVal.substring(end);
+      onChange(newValue);
+      
+      // Move cursor after the inserted bullet
+      setTimeout(() => {
+        if (textareaRef.current) {
+          textareaRef.current.selectionStart = start + 3;
+          textareaRef.current.selectionEnd = start + 3;
+        }
+      }, 0);
+    }
+  };
+
+  const handleChange = (e) => {
+    let val = e.target.value;
+    
+    // Auto start with bullet if they type the first char
+    if ((!value || value === "") && val.length === 1 && val !== "\n" && val !== "•") {
+      val = "• " + val;
+    }
+    
+    onChange(val);
+  };
+
+  return (
+    <textarea
+      ref={textareaRef}
+      className={className}
+      placeholder={placeholder}
+      value={value || ""}
+      onChange={handleChange}
+      onKeyDown={handleKeyDown}
+    />
+  );
+};
 
 export default function JobDetailsForm({ jobForm, onChange }) {
   return (
@@ -132,30 +185,32 @@ export default function JobDetailsForm({ jobForm, onChange }) {
       {/* ── Row 5b: Responsibilities ────────────────────── */}
       <div>
         <label className="block text-sm font-semibold text-[#1A1A1A] mb-2">Key Responsibilities <span className="text-gray-400 font-normal">(optional)</span></label>
-        <textarea
+        <BulletTextArea
           className="w-full px-4 py-3 bg-white border border-[#E5E5E0] rounded-xl text-sm focus:outline-none focus:border-[#7C9070] focus:ring-1 focus:ring-[#7C9070] transition-colors placeholder-gray-400 text-[#1A1A1A] min-h-30 resize-y"
           value={jobForm.responsibilities}
-          onChange={(e) => onChange("responsibilities", e.target.value)}
+          onChange={(val) => onChange("responsibilities", val)}
         />
       </div>
 
       {/* ── Row 5c: Requirements ────────────────────────── */}
       <div>
         <label className="block text-sm font-semibold text-[#1A1A1A] mb-2">Requirements / Qualifications <span className="text-gray-400 font-normal">(optional)</span></label>
-        <textarea
+        <BulletTextArea
           className="w-full px-4 py-3 bg-white border border-[#E5E5E0] rounded-xl text-sm focus:outline-none focus:border-[#7C9070] focus:ring-1 focus:ring-[#7C9070] transition-colors placeholder-gray-400 text-[#1A1A1A] min-h-30 resize-y" 
+          placeholder="• 3+ years of React experience..."
           value={jobForm.requirements}
-          onChange={(e) => onChange("requirements", e.target.value)}
+          onChange={(val) => onChange("requirements", val)}
         />
       </div>
 
       {/* ── Row 5d: Benefits ────────────────────────────── */}
       <div>
         <label className="block text-sm font-semibold text-[#1A1A1A] mb-2">Benefits & Perks <span className="text-gray-400 font-normal">(optional)</span></label>
-        <textarea
+        <BulletTextArea
           className="w-full px-4 py-3 bg-white border border-[#E5E5E0] rounded-xl text-sm focus:outline-none focus:border-[#7C9070] focus:ring-1 focus:ring-[#7C9070] transition-colors placeholder-gray-400 text-[#1A1A1A] min-h-30 resize-y"
+          placeholder="• Comprehensive health insurance..."
           value={jobForm.benefits}
-          onChange={(e) => onChange("benefits", e.target.value)}
+          onChange={(val) => onChange("benefits", val)}
         />
       </div>
     </>

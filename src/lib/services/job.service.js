@@ -40,6 +40,13 @@ export async function getMyJobs() {
     return handleResponse(response);
 }
 
+export async function getCompanyJobs() {
+    const response = await fetch(`${BASE_URL}/api/jobs/company-jobs`, {
+        headers: authHeaders(),
+    });
+    return handleResponse(response);
+}
+
 export async function closeJob(id) {
     const response = await fetch(`${BASE_URL}/api/jobs/${id}/close`, {
         method: "PATCH",

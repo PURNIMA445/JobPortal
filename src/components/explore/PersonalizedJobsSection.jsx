@@ -23,7 +23,7 @@ export default function PersonalizedJobsSection({ personalizedJobs, userRole, ro
             company={job.company?.name || "Acme Inc"}
             location={job.location}
             type={job.jobType ? job.jobType.replace('_', ' ') : "FULL TIME"}
-            salary={job.salaryMax ? `$${job.salaryMin} - $${job.salaryMax}` : null}
+            salary={job.salaryMax ? `रू. ${job.salaryMin.toLocaleString()} - रू. ${job.salaryMax.toLocaleString()}` : null}
             onClick={() => router.push(`/jobs/${job.id}`)}
             outerClassName="bg-white"
           />

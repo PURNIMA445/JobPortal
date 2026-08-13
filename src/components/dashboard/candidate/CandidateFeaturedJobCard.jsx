@@ -45,7 +45,7 @@ export default function CandidateFeaturedJobCard({ job, isSaved, onSave, onApply
         </span>
         {job.salaryMin && (
           <span className="flex items-center gap-1.5 bg-[#FDFBF7] px-3 py-1.5 rounded-lg border border-[#E8E1D5] text-[#5C7356]">
-            ${job.salaryMin.toLocaleString()}
+            रू. {job.salaryMin.toLocaleString()}
           </span>
         )}
       </div>

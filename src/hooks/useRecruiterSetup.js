@@ -6,8 +6,10 @@ import {
   updateRecruiterProfile, 
   getRecruiterProfile 
 } from "@/lib/api";
+import useAuth from "@/hooks/useAuth";
 
 export function useRecruiterSetup(router) {
+  const { refreshProfile } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   
@@ -99,6 +101,11 @@ export function useRecruiterSetup(router) {
       } else {
         await createRecruiterProfile(form);
       }
+
+      if (refreshProfile) {
+        await refreshProfile();
+      }
+
       router.push("/dashboard/recruiter");
     } catch (err) {
       setError(err.message);

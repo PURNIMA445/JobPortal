@@ -42,8 +42,28 @@ export default function MatchScoreBlock({
               <span className="text-sm font-bold uppercase tracking-wider text-gray-400 mb-1.5">Match</span>
             </div>
 
+            {/* Matched Skills */}
+            {scoreResult.matchedSkills?.length > 0 && (
+              <div className="mb-6">
+                <h5 className="text-xs font-bold uppercase tracking-widest text-emerald-600 mb-3 flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Matched Skills
+                </h5>
+                <div className="flex flex-wrap gap-2">
+                  {scoreResult.matchedSkills.map((skill, i) => (
+                    <span key={i} className="px-3 py-1.5 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-lg border border-emerald-100 shadow-sm">
+                      {skill.trim()}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Missing Skills */}
             {scoreResult.missingSkills?.length > 0 && (
-              <div>
+              <div className="mb-6">
                 <h5 className="text-xs font-bold uppercase tracking-widest text-rose-500 mb-3 flex items-center gap-2">
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -57,6 +77,41 @@ export default function MatchScoreBlock({
                     </span>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* Experience & Relevance */}
+            {(scoreResult.experienceMatch || scoreResult.projectRelevance) && (
+              <div className="mb-6 space-y-4">
+                {scoreResult.experienceMatch && (
+                  <div>
+                    <h5 className="text-xs font-bold uppercase tracking-widest text-indigo-500 mb-1">Experience</h5>
+                    <p className="text-sm text-gray-700">{scoreResult.experienceMatch}</p>
+                  </div>
+                )}
+                {scoreResult.projectRelevance && (
+                  <div>
+                    <h5 className="text-xs font-bold uppercase tracking-widest text-indigo-500 mb-1">Analysis</h5>
+                    <p className="text-sm text-gray-700">{scoreResult.projectRelevance}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Suggestions */}
+            {scoreResult.suggestions?.length > 0 && (
+              <div>
+                <h5 className="text-xs font-bold uppercase tracking-widest text-amber-500 mb-3 flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Suggestions for Improvement
+                </h5>
+                <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
+                  {scoreResult.suggestions.map((suggestion, i) => (
+                    <li key={i}>{suggestion}</li>
+                  ))}
+                </ul>
               </div>
             )}
           </div>

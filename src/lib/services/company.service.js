@@ -61,3 +61,19 @@ export async function removeCompanyMember(companyId, memberId) {
     });
     return handleResponse(response);
 }
+
+export async function getPendingMembers(companyId) {
+    const response = await fetch(`${BASE_URL}/api/companies/${companyId}/members/pending`, {
+        headers: authHeaders(),
+    });
+    return handleResponse(response);
+}
+
+export async function verifyMember(companyId, memberId, isApproved) {
+    const response = await fetch(`${BASE_URL}/api/companies/${companyId}/members/${memberId}/verify`, {
+        method: "PUT",
+        headers: authHeaders(),
+        body: JSON.stringify({ isApproved }),
+    });
+    return handleResponse(response);
+}

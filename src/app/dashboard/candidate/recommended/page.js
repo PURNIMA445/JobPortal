@@ -111,7 +111,7 @@ export default function RecommendedJobsPage() {
                   {job.salaryMin && (
                     <>
                       <span className="text-[#E8E1D5]">•</span>
-                      <span>${job.salaryMin.toLocaleString()} - ${job.salaryMax.toLocaleString()}</span>
+                      <span>रू. {job.salaryMin.toLocaleString()} - रू. {job.salaryMax.toLocaleString()}</span>
                     </>
                   )}
                 </div>

@@ -31,7 +31,9 @@ export function SavedJobsProvider({ children }) {
       const data = await getSavedJobs();
       setSavedJobIds(data.map((job) => job.id));
     } catch (err) {
-      console.error("Failed to fetch saved jobs", err);
+      if (err.status !== 404 && err.message !== "Candidate profile not found") {
+        console.error("Failed to fetch saved jobs", err);
+      }
     } finally {
       setLoading(false);
     }

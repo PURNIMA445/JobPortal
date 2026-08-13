@@ -30,7 +30,7 @@ export default function CandidateDashboard() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
       <div className="hidden lg:block lg:col-span-3 xl:col-span-3">
-        <LeftSidebar profileCompletion={profileCompletion} />
+        <LeftSidebar />
       </div>
 
       <div className="col-span-1 lg:col-span-6 xl:col-span-6">

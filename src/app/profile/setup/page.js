@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useCandidateSetup } from "@/hooks/useCandidateSetup";
 import ProjectSetupSection from "@/components/profile/ProjectSetupSection";
+import ExperienceSetupSection from "@/components/profile/ExperienceSetupSection";
 
 const inputClass = "w-full px-4 py-3 bg-[#FDFBF7] border border-[#E8E1D5] rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#7A8B6A]/20 focus:border-[#7A8B6A] transition-all";
 const labelClass = "text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-2 block";
@@ -20,9 +21,15 @@ export default function CandidateSetupPage() {
     setProject,
     addingProject,
     setAddingProject,
+    experience,
+    setExperience,
+    addingExperience,
+    setAddingExperience,
     toggleSkill,
     addProject,
     removeProject,
+    addExperience,
+    removeExperience,
     handleSubmit
   } = useCandidateSetup(router);
 
@@ -136,31 +143,56 @@ export default function CandidateSetupPage() {
 
               <div>
                 <label className={labelClass}>Top Skills</label>
-                <div className="flex flex-wrap gap-2 mt-3">
-                  {skills.map(skill => {
-                    const active = form.skillIds.includes(skill.id);
-                    return (
-                      <button
-                        key={skill.id}
-                        type="button"
-                        onClick={() => toggleSkill(skill.id)}
-                        className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-sm border
-                          ${active 
-                            ? "bg-[#EEF4EC] text-[#3D6B36] border-[#C2D9BE]" 
-                            : "bg-white text-gray-600 border-[#E8E1D5] hover:border-[#7A8B6A] hover:text-[#7A8B6A]"
-                          }`}
-                      >
-                        {skill.name}
-                      </button>
-                    );
-                  })}
+                <div className="mt-4 space-y-5">
+                  {Object.entries(
+                    skills.reduce((acc, skill) => {
+                      const cat = skill.category || "General";
+                      if (!acc[cat]) acc[cat] = [];
+                      acc[cat].push(skill);
+                      return acc;
+                    }, {})
+                  ).sort(([a], [b]) => a.localeCompare(b)).map(([category, catSkills]) => (
+                    <div key={category}>
+                      <h3 className="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-2">{category}</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {catSkills.map(skill => {
+                          const active = form.skillIds.includes(skill.id);
+                          return (
+                            <button
+                              key={skill.id}
+                              type="button"
+                              onClick={() => toggleSkill(skill.id)}
+                              className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-sm border
+                                ${active 
+                                  ? "bg-[#EEF4EC] text-[#3D6B36] border-[#C2D9BE]" 
+                                  : "bg-white text-gray-600 border-[#E8E1D5] hover:border-[#7A8B6A] hover:text-[#7A8B6A]"
+                                }`}
+                            >
+                              {skill.name}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
                   {skills.length === 0 && (
-                    <p className="text-sm text-gray-400 italic">No skills available.</p>
+                    <p className="text-sm text-gray-400 italic mt-2">No skills available.</p>
                   )}
                 </div>
               </div>
             </div>
           </div>
+
+          {/* EXPERIENCE SECTION */}
+          <ExperienceSetupSection
+            form={form}
+            experience={experience}
+            setExperience={setExperience}
+            addingExperience={addingExperience}
+            setAddingExperience={setAddingExperience}
+            addExperience={addExperience}
+            removeExperience={removeExperience}
+          />
 
           {/* PROJECTS SECTION */}
           <ProjectSetupSection

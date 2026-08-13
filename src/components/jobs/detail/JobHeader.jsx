@@ -37,8 +37,8 @@ export default function JobHeader({ job }) {
               </span>
               {job.salaryMin && job.salaryMax && (
                 <span className="flex items-center gap-1.5 bg-[#EEF4EC] text-[#3D6B36] border border-[#C2D9BE] px-3 py-1.5 rounded-lg">
-                  <DollarSignIcon className="w-4 h-4 text-[#3D6B36]" />
-                  ${job.salaryMin} - ${job.salaryMax}
+                  <span className="font-semibold text-sm">रू.</span>
+                  {job.salaryMin.toLocaleString()} - {job.salaryMax.toLocaleString()}
                 </span>
               )}
             </div>

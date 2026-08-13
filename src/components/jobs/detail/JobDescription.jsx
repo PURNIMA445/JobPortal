@@ -80,6 +80,42 @@ export default function JobDescription({ job }) {
           Job Overview
         </h2>
         <div>{renderDescription(job.description)}</div>
+
+        {job.responsibilities && (
+          <>
+            <h3 className="text-gray-900 font-serif font-medium text-lg mt-8 mb-4 flex items-center gap-2">
+              <svg className="w-4 h-4 text-[#7A8B6A]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              Key Responsibilities
+            </h3>
+            <div className="text-gray-600 leading-relaxed mb-4 font-medium whitespace-pre-wrap">
+              {job.responsibilities}
+            </div>
+          </>
+        )}
+
+        {job.requirements && (
+          <>
+            <h3 className="text-gray-900 font-serif font-medium text-lg mt-8 mb-4 flex items-center gap-2">
+              <svg className="w-4 h-4 text-[#7A8B6A]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              Requirements & Qualifications
+            </h3>
+            <div className="text-gray-600 leading-relaxed mb-4 font-medium whitespace-pre-wrap">
+              {job.requirements}
+            </div>
+          </>
+        )}
+
+        {job.benefits && (
+          <>
+            <h3 className="text-gray-900 font-serif font-medium text-lg mt-8 mb-4 flex items-center gap-2">
+              <svg className="w-4 h-4 text-[#7A8B6A]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              Benefits & Perks
+            </h3>
+            <div className="text-gray-600 leading-relaxed mb-4 font-medium whitespace-pre-wrap">
+              {job.benefits}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Company Info */}

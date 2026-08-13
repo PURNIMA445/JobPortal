@@ -10,6 +10,8 @@ export default function RecruitersLanding() {
   const {
     candidates,
     loading,
+    activeJob,
+    aiAnalysis,
     isScanning,
     selectedRole,
     setSelectedRole,
@@ -80,6 +82,8 @@ export default function RecruitersLanding() {
         userRole={userRole}
         loading={loading}
         candidates={candidates}
+        activeJob={activeJob}
+        aiAnalysis={aiAnalysis}
       />
 
       {/* ───── ADDITIONAL PLANS OR FOOTER CALL-TO-ACTION ───── */}

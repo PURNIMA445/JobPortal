@@ -199,3 +199,21 @@ export async function rankCandidates(jobDescription, candidates, jobId, applican
 
   return rankingResult;
 }
+
+// Parse CV directly for candidate onboarding
+export async function parseCV(file) {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetch("/api/parse-cv", {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || `Failed to parse CV (Status: ${response.status})`);
+  }
+
+  return response.json();
+}

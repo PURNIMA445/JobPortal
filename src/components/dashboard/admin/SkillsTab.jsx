@@ -141,22 +141,33 @@ export default function SkillsTab() {
           {filteredSkills.length === 0 ? (
             <p className="text-[#6B7264] text-sm text-center py-8">No skills matches found. Add a skill to database using the controller above.</p>
           ) : (
-            <div className="flex flex-wrap gap-2.5">
-              {filteredSkills.map((skill) => (
-                <div key={skill.id} className="flex items-center gap-2.5 bg-[#FDFBF7] border border-[#E8E1D5] rounded-xl px-3 py-2">
-                  <span className="text-sm font-medium text-[#1C1F1A]">{skill.name}</span>
-                  {skill.category && (
-                    <span className="text-[10px] uppercase tracking-wider font-semibold text-[#6B7264] bg-[#F0F2EB] px-2 py-0.5 rounded-lg">{skill.category}</span>
-                  )}
-                  <button
-                    onClick={() => handleDeleteSkill(skill.id)}
-                    disabled={deletingId === skill.id}
-                    className="text-[#DC2626] hover:text-[#B91C1C] transition-colors disabled:opacity-40 ml-1.5"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
+            <div className="space-y-6">
+              {Object.entries(
+                filteredSkills.reduce((acc, skill) => {
+                  const cat = skill.category || "General";
+                  if (!acc[cat]) acc[cat] = [];
+                  acc[cat].push(skill);
+                  return acc;
+                }, {})
+              ).sort(([a], [b]) => a.localeCompare(b)).map(([category, catSkills]) => (
+                <div key={category}>
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-[#6B7264] mb-3 border-b border-[#E8E1D5] pb-1">{category}</h3>
+                  <div className="flex flex-wrap gap-2.5">
+                    {catSkills.map((skill) => (
+                      <div key={skill.id} className="flex items-center gap-2.5 bg-[#FDFBF7] border border-[#E8E1D5] rounded-xl px-3 py-2">
+                        <span className="text-sm font-medium text-[#1C1F1A]">{skill.name}</span>
+                        <button
+                          onClick={() => handleDeleteSkill(skill.id)}
+                          disabled={deletingId === skill.id}
+                          className="text-[#DC2626] hover:text-[#B91C1C] transition-colors disabled:opacity-40 ml-1.5"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>

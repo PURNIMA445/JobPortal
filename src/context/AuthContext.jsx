@@ -32,7 +32,13 @@ export function AuthProvider({ children }) {
       setUserRole(role);
 
       if (role === "CANDIDATE") {
-        getCandidateProfile().then(setProfile).catch(console.error);
+        getCandidateProfile()
+          .then(setProfile)
+          .catch((err) => {
+            if (err.status !== 404 && err.message !== "Profile not found") {
+              console.error(err);
+            }
+          });
         fetchUnreadCount().then(setUnreadCount).catch(console.error);
       } else if (role === "RECRUITER") {
         getRecruiterProfile().then(setProfile).catch(console.error);
@@ -59,6 +65,25 @@ export function AuthProvider({ children }) {
     window.location.href = "/";
   };
 
+  const refreshProfile = async () => {
+    const role = localStorage.getItem("role");
+    if (role === "CANDIDATE") {
+      try {
+        const p = await getCandidateProfile();
+        setProfile(p);
+      } catch (err) {
+        if (err.status !== 404 && err.message !== "Profile not found") console.error(err);
+      }
+    } else if (role === "RECRUITER") {
+      try {
+        const p = await getRecruiterProfile();
+        setProfile(p);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  };
+
   const getDashboardLink = () => {
     return userRole === "ADMIN" 
       ? "/dashboard/admin" 
@@ -76,6 +101,7 @@ export function AuthProvider({ children }) {
         unreadCount,
         mounted,
         logout,
+        refreshProfile,
         dashboardLink: getDashboardLink(),
       }}
     >

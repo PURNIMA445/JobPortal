@@ -84,23 +84,34 @@ export default function CandidateRankRow({
           </span>
         </td>
 
-        {/* Toggle Expand */}
+        {/* Actions */}
         <td className="px-4 py-3 text-right">
-          <button
-            onClick={onToggleExpand}
-            className="p-1 hover:bg-[#F5F2EB] rounded-full text-[#6B7264] hover:text-[#1A1A1A] transition-colors"
-            aria-expanded={isExpanded}
-            aria-label={`Toggle details for ${c.candidateName}`}
-          >
-            <svg
-              className={`w-5 h-5 transition-transform ${isExpanded ? "rotate-180" : ""}`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          <div className="flex items-center justify-end gap-2">
+            <a 
+              href={`/dashboard/recruiter/candidate/${c.id}`} 
+              target="_blank"
+              rel="noreferrer"
+              className="text-[#7A8B6A] hover:text-[#3D6B36] font-semibold text-xs"
+              aria-label={`View full profile for ${c.candidateName}`}
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
+              View Profile
+            </a>
+            <button
+              onClick={onToggleExpand}
+              className="p-1 hover:bg-[#F5F2EB] rounded-full text-[#6B7264] hover:text-[#1A1A1A] transition-colors"
+              aria-expanded={isExpanded}
+              aria-label={`Toggle details for ${c.candidateName}`}
+            >
+              <svg
+                className={`w-5 h-5 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+          </div>
         </td>
       </tr>
 

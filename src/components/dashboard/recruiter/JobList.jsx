@@ -20,7 +20,11 @@ function StatusBadge({ status }) {
 
 // ─── Single job row ───────────────────────────────────────────────────────────
 
-function JobRow({ job, idx, onView, onClose }) {
+function JobRow({ job, idx, onView, onClose, profile }) {
+  const isOwner = job.recruiterName === profile?.fullName;
+  const isAdmin = profile?.companyRole === "ADMIN";
+  const canModify = isOwner || isAdmin;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -53,6 +57,11 @@ function JobRow({ job, idx, onView, onClose }) {
             </span>
           )}
         </div>
+        {!isOwner && (
+          <div className="mt-3 text-xs text-gray-500 font-medium">
+            Posted by <span className="text-gray-700">{job.recruiterName}</span>
+          </div>
+        )}
       </div>
 
       <div className="flex items-center gap-3 mt-4 md:mt-0">
@@ -63,7 +72,7 @@ function JobRow({ job, idx, onView, onClose }) {
           <UsersIcon className="w-4 h-4" />
           View Applicants
         </button>
-        {job.status === "OPEN" && (
+        {job.status === "OPEN" && canModify && (
           <>
             <Link
               href={`/dashboard/recruiter/jobs/${job.id}/edit`}
@@ -121,10 +130,10 @@ function EmptyJobList({ onPost }) {
  *   onClose    — (jobId) => void — close/archive a job
  *   onPost     — () => void — open the PostJobForm (used by empty state CTA)
  */
-export default function JobList({ jobs, onView, onClose, onPost }) {
+export default function JobList({ jobs, profile, onView, onClose, onPost }) {
   return (
     <div>
-      <h2 className="font-serif text-2xl mb-4 text-[#1A1A1A]">My Posted Jobs</h2>
+      <h2 className="font-serif text-2xl mb-4 text-[#1A1A1A]">Company Jobs</h2>
       <div className="space-y-4">
         {jobs.length === 0 ? (
           <EmptyJobList onPost={onPost} />
@@ -134,6 +143,7 @@ export default function JobList({ jobs, onView, onClose, onPost }) {
               key={job.id}
               job={job}
               idx={idx}
+              profile={profile}
               onView={onView}
               onClose={onClose}
             />

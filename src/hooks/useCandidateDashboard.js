@@ -5,6 +5,7 @@ import {
 } from "@/lib/services/candidate.service";
 import { getRecommendedJobs, getSavedJobs } from "@/lib/services/job.service";
 import { getUnreadCount } from "@/lib/services/notification.service";
+import { useProfileStrength } from "@/hooks/useProfileStrength";
 
 export function useCandidateDashboard() {
   const [profile, setProfile] = useState(null);
@@ -33,15 +34,7 @@ export function useCandidateDashboard() {
       .finally(() => setLoading(false));
   }, []);
 
-  const profileChecklist = [
-    { label: "Basic Information", done: !!profile?.fullName },
-    { label: "Skills", done: (profile?.skills?.length || 0) > 0 },
-    { label: "Projects", done: (profile?.projects?.length || 0) > 0 },
-    { label: "Experience", done: (profile?.experienceYears || 0) > 0 },
-    { label: "Resume Uploaded", done: !!profile?.resumeUrl },
-  ];
-  
-  const profileCompletion = profileChecklist.filter(item => item.done).length * 20;
+  const { profileChecklist, profileCompletion } = useProfileStrength();
 
   return {
     profile,

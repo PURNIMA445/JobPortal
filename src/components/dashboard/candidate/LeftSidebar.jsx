@@ -7,6 +7,7 @@ import {
   LeafIcon, FileTextIcon, BookmarkIcon, BriefcaseIcon,
   MessageSquareIcon, BellIcon, SettingsIcon, UsersIcon
 } from "@/components/dashboard/icons";
+import { useProfileStrength } from "@/hooks/useProfileStrength";
 
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/dashboard/candidate", icon: LeafIcon },
@@ -18,8 +19,9 @@ const NAV_ITEMS = [
   { label: "Settings", href: "/dashboard/candidate/settings", icon: SettingsIcon },
 ];
 
-export default function LeftSidebar({ profileCompletion = 0 }) {
+export default function LeftSidebar() {
   const pathname = usePathname();
+  const { profileCompletion } = useProfileStrength();
 
   return (
     <div className="flex flex-col gap-8 sticky top-28">

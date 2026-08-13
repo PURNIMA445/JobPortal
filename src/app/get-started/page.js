@@ -125,7 +125,7 @@ export default function SignupPage() {
           if (userRole === "RECRUITER") {
             window.location.href = "/recruiter/setup";
           } else if (userRole === "CANDIDATE") {
-            window.location.href = "/profile/setup";
+            window.location.href = "/candidate/onboarding";
           } else {
             window.location.href = "/";
           }
